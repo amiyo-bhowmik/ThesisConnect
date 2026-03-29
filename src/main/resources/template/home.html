@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thesis Connect - Home</title>
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+<body>
+    <div class="home-container">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h2>Thesis Connect</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="#" id="profileLink">Profile</a>
+                <a href="#" id="groupsLink">Groups</a>
+                <a href="#" id="documentsLink">Documents</a>
+                <a href="#" id="logoutBtn">Logout</a>
+            </div>
+        </nav>
+        
+        <div class="main-content">
+            <div class="welcome-section">
+                <h1>Welcome, <span id="userName">User</span>!</h1>
+                <p>Find and collaborate with thesis partners, manage your research groups, and share documents.</p>
+            </div>
+            
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>Find Thesis Partners</h3>
+                    <p>Search for students with similar research interests</p>
+                    <button class="btn-primary" onclick="searchPartners()">Search</button>
+                </div>
+                
+                <div class="card">
+                    <h3>My Groups</h3>
+                    <p>View and manage your thesis groups</p>
+                    <button class="btn-primary" onclick="viewGroups()">View Groups</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Documents</h3>
+                    <p>Access and collaborate on research documents</p>
+                    <button class="btn-primary" onclick="viewDocuments()">View Documents</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Messages</h3>
+                    <p>Communicate with group members</p>
+                    <button class="btn-primary" onclick="viewMessages()">View Messages</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- <script src="/js/auth.js"></script> -->
+     
+</body>
+</html>
