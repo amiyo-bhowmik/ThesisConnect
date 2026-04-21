@@ -1,21 +1,69 @@
 package com.example.ThesisConnect.service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-
+import com.example.ThesisConnect.domain.User;
+import com.example.ThesisConnect.dto.ProfileResponse;
+import com.example.ThesisConnect.dto.ProfileUpdateRequest;
+import com.example.ThesisConnect.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.example.ThesisConnect.dto.ProfileResponse;
-import com.example.ThesisConnect.dto.ProfileUpdateRequest;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.UUID;
 
+@Service
 public class ProfileService {
+
+    private static final List<String> ALLOWED_CONTENT_TYPES = List.of("image/jpeg", "image/png", "image/webp");
+
+    private final UserRepository userRepository;
+    private final Path uploadRoot;
+
+    public ProfileService(UserRepository userRepository, @Value("${app.upload.dir}") String uploadDir) {
+        this.userRepository = userRepository;
+        this.uploadRoot = Path.of(uploadDir).toAbsolutePath().normalize();
+    }
 
     public ProfileResponse getProfile(String email) {
         return mapToResponse(findByEmail(email));
+    }
+
+    public List<ProfileResponse> searchStudents(
+            String email,
+            String name,
+            String studentEmail,
+            String researchInterest,
+            String department,
+            String university,
+            Boolean lookingForGroupOnly
+    ) {
+        User currentUser = findByEmail(email);
+        return userRepository.searchStudents(
+                        currentUser.getUserId(),
+                        trimToNull(name),
+                        trimToNull(studentEmail),
+                        trimToNull(researchInterest),
+                        trimToNull(department),
+                        trimToNull(university),
+                        lookingForGroupOnly
+                ).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    public ProfileResponse getStudentProfile(String email, Long userId) {
+        findByEmail(email);
+        return userRepository.findById(userId)
+                .map(this::mapToResponse)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student profile not found"));
     }
 
     public ProfileResponse updateProfile(String email, ProfileUpdateRequest request) {
@@ -35,6 +83,35 @@ public class ProfileService {
         user.setLookingForGroup(request.isLookingForGroup());
 
         return mapToResponse(userRepository.save(user));
+    }
+
+    public ProfileResponse uploadProfilePicture(String email, MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please select an image");
+        }
+
+        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only JPG, PNG, or WEBP images are allowed");
+        }
+
+        User user = findByEmail(email);
+        try {
+            Files.createDirectories(uploadRoot);
+            String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            String safeExtension = extension == null ? "png" : extension.toLowerCase();
+            String fileName = UUID.randomUUID() + "." + safeExtension;
+            Path destination = uploadRoot.resolve(fileName);
+            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+            user.setProfilePicture("/uploads/" + fileName);
+            return mapToResponse(userRepository.save(user));
+        } catch (IOException exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not store profile picture");
+        }
+    }
+
+    private User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     private ProfileResponse mapToResponse(User user) {
@@ -73,53 +150,4 @@ public class ProfileService {
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
     }
-    
-    public ProfileResponse uploadProfilePicture(String email, MultipartFile file) {
-        if (file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please select an image");
-        }
-
-        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only JPG, PNG, or WEBP images are allowed");
-        }
-
-        User user = findByEmail(email);
-        try {
-            Files.createDirectories(uploadRoot);
-            String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-            String safeExtension = extension == null ? "png" : extension.toLowerCase();
-            String fileName = UUID.randomUUID() + "." + safeExtension;
-            Path destination = uploadRoot.resolve(fileName);
-            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-            user.setProfilePicture("/uploads/" + fileName);
-            return mapToResponse(userRepository.save(user));
-        } catch (IOException exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not store profile picture");
-        }
-    }
-
-    public List<ProfileResponse> searchStudents(
-            String email,
-            String name,
-            String studentEmail,
-            String researchInterest,
-            String department,
-            String university,
-            Boolean lookingForGroupOnly
-    ) {
-        User currentUser = findByEmail(email);
-        return userRepository.searchStudents(
-                        currentUser.getUserId(),
-                        trimToNull(name),
-                        trimToNull(studentEmail),
-                        trimToNull(researchInterest),
-                        trimToNull(department),
-                        trimToNull(university),
-                        lookingForGroupOnly
-                ).stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-
 }
