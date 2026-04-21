@@ -1,3 +1,50 @@
+const { useEffect, useState } = React;
+
+function getToken() {
+  return window.localStorage.getItem("thesisconnect_token");
+}
+
+function buildAuthHeaders(extraHeaders) {
+  const token = getToken();
+  return {
+    ...(extraHeaders || {}),
+    Authorization: `Bearer ${token}`
+  };
+}
+
+async function handleApiResponse(response, fallbackMessage) {
+  if (response.status === 401) {
+    window.localStorage.removeItem("thesisconnect_token");
+    window.location.href = "/login.html";
+    throw new Error("Session expired. Please log in again.");
+  }
+
+  if (!response.ok) {
+    const rawBody = await response.text();
+    let message = rawBody;
+
+    try {
+      const data = rawBody ? JSON.parse(rawBody) : {};
+      message = data.message || data.detail || data.error || rawBody;
+    } catch (parseError) {
+      message = rawBody;
+    }
+
+    throw new Error(message || fallbackMessage);
+  }
+
+  return response.json();
+}
+
+function getInitials(name) {
+  return (name || "?")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 function buildStudentQuery(filters) {
   const params = new URLSearchParams();
 
@@ -27,6 +74,8 @@ function buildStudentQuery(filters) {
 
   const queryString = params.toString();
   return queryString ? `/api/profile/students?${queryString}` : "/api/profile/students";
+}
+
 function DiscoverPage() {
   const [students, setStudents] = useState([]);
   const [directoryLoading, setDirectoryLoading] = useState(true);
@@ -82,6 +131,20 @@ function DiscoverPage() {
       })
       .finally(() => setDirectoryLoading(false));
   }
+
+  function loadStudentProfile(userId) {
+    setSelectedStudentLoading(true);
+    setSelectedStudentError("");
+
+    fetch(`/api/profile/students/${userId}`, {
+      headers: buildAuthHeaders()
+    })
+      .then((response) => handleApiResponse(response, "Could not load student profile"))
+      .then((data) => setSelectedStudent(data))
+      .catch((err) => setSelectedStudentError(err.message))
+      .finally(() => setSelectedStudentLoading(false));
+  }
+
   function updateDirectoryField(event) {
     const { name, value, type, checked } = event.target;
     setDirectoryFilters((current) => ({
@@ -107,136 +170,8 @@ function DiscoverPage() {
     setDirectoryFilters(clearedFilters);
     loadStudents(clearedFilters);
   }
-      <section className="panel stack">
-        <div>
-          <h1 className="page-title" style={{fontSize: "2.8rem"}}>Discover thesis partners</h1>
-          <p className="helper">
-            Search students by name, email, or research interests, filter by department or university,
-            view full profiles, and quickly see who is currently looking for a thesis group.
-          </p>
-        </div>
 
-        <form className="auth-form" onSubmit={searchStudents}>
-          <div className="directory-grid">
-            <label className="field">
-              <span>Name</span>
-              <input
-                name="name"
-                value={directoryFilters.name}
-                onChange={updateDirectoryField}
-                placeholder="Search by student name"
-              />
-            </label>
-            <label className="field">
-              <span>Email</span>
-              <input
-                name="email"
-                value={directoryFilters.email}
-                onChange={updateDirectoryField}
-                placeholder="Search by student email"
-              />
-            </label>
-            <label className="field">
-              <span>Research interest</span>
-              <input
-                name="interest"
-                value={directoryFilters.interest}
-                onChange={updateDirectoryField}
-                placeholder="AI, Cybersecurity, NLP"
-              />
-            </label>
-            <label className="field">
-              <span>Department</span>
-              <input
-                name="department"
-                value={directoryFilters.department}
-                onChange={updateDirectoryField}
-                placeholder="Computer Science"
-              />
-            </label>
-            <label className="field">
-              <span>University</span>
-              <input
-                name="university"
-                value={directoryFilters.university}
-                onChange={updateDirectoryField}
-                placeholder="BRAC University"
-              />
-            </label>
-          </div>
-
-          <div className="directory-toolbar">
-            <label className="field inline-toggle">
-              <input
-                type="checkbox"
-                name="lookingForGroupOnly"
-                checked={directoryFilters.lookingForGroupOnly}
-                onChange={updateDirectoryField}
-              />
-              <span>Show only students looking for thesis groups</span>
-            </label>
-            <div className="nav-links">
-              <button className="button" type="submit">Search students</button>
-              <button className="button-secondary" type="button" onClick={clearFilters}>Clear filters</button>
-            </div>
-          </div>
-        </form>
-        <div className="directory-layout">
-          <div className="results-column">
-            <div className="results-header">
-              <div className="section-title" style={{marginBottom: 0}}>Student results</div>
-              <div className="footer-note">
-                {directoryLoading ? "Searching students..." : `${students.length} student${students.length === 1 ? "" : "s"} found`}
-              </div>
-            </div>
-
-            {directoryLoading ? (
-              <div className="notice">Loading discovery results...</div>
-            ) : students.length === 0 ? (
-              <div className="notice">
-                No students matched your current search. Try broadening the research interest or filter values.
-              </div>
-            ) : (
-              <div className="student-list">
-                {students.map((student) => (
-                  <button
-                    type="button"
-                    key={student.userId}
-                    className={`student-card ${selectedStudentId === student.userId ? "student-card-active" : ""}`}
-                    onClick={() => openStudent(student.userId)}
-                  >
-                    <div className="student-card-head">
-                      <div className="student-identity">
-                        {student.profilePicture ? (
-                          <img className="student-avatar" src={student.profilePicture} alt={student.name} />
-                        ) : (
-                          <div className="student-avatar student-avatar-placeholder">
-                            {getInitials(student.name)}
-                          </div>
-                        )}
-                        <div>
-                          <div className="student-name">{student.name}</div>
-                          <div className="muted compact-text">
-                            {student.department || "Department not added"}
-                          </div>
-                        </div>
-                      </div>
-                      <span className={`status-badge ${student.lookingForGroup ? "status-open" : "status-closed"}`}>
-                        {student.lookingForGroup ? "Looking for group" : "Not searching"}
-                      </span>
-                    </div>
-
-                    <div className="compact-text muted">
-                      {student.university || "University not added yet"}
-                    </div>
-
-                    <div className="chip-row compact-chips">
-                      {(student.researchInterests || []).slice(0, 3).map((interest) => (
-                        <div className="chip" key={interest}>{interest}</div>
-                      ))}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-}
+  function openStudent(studentId) {
+    setSelectedStudentId(studentId);
+    loadStudentProfile(studentId);
+  }
