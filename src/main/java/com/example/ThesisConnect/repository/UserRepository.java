@@ -81,6 +81,100 @@ public class UserRepository {
         return Optional.of(user);
     }
 
+    public List<User> searchStudents(
+            Long currentUserId,
+            String name,
+            String email,
+            String researchInterest,
+            String department,
+            String university,
+            Boolean lookingForGroupOnly
+    ) {
+        StringBuilder sql = new StringBuilder(
+                """
+                SELECT user_id, name, email, password, department, university,
+                       academic_details, bio, profile_picture, is_looking_for_group
+                FROM users u
+                WHERE u.user_id <> ?
+                """
+        );
+        List<Object> params = new ArrayList<>();
+        params.add(currentUserId);
+
+        if (hasText(name)) {
+            sql.append(" AND LOWER(COALESCE(u.name, '')) LIKE ? ");
+            params.add(toContainsQuery(name));
+        }
+
+        if (hasText(email)) {
+            sql.append(" AND LOWER(COALESCE(u.email, '')) LIKE ? ");
+            params.add(toContainsQuery(email));
+        }
+
+        if (hasText(researchInterest)) {
+            sql.append(
+                    """
+                     AND EXISTS (
+                        SELECT 1
+                        FROM user_research_interests uri
+                        WHERE uri.user_id = u.user_id
+                          AND LOWER(uri.interest) LIKE ?
+                    )
+                    """
+            );
+            params.add(toContainsQuery(researchInterest));
+        }
+
+        if (hasText(department)) {
+            sql.append(" AND LOWER(COALESCE(u.department, '')) LIKE ? ");
+            params.add(toContainsQuery(department));
+        }
+
+        if (hasText(university)) {
+            sql.append(" AND LOWER(COALESCE(u.university, '')) LIKE ? ");
+            params.add(toContainsQuery(university));
+        }
+
+        if (Boolean.TRUE.equals(lookingForGroupOnly)) {
+            sql.append(" AND u.is_looking_for_group = ? ");
+            params.add(true);
+        }
+
+        sql.append(" ORDER BY u.is_looking_for_group DESC, LOWER(u.name) ASC ");
+
+        List<User> users = jdbcTemplate.query(sql.toString(), USER_ROW_MAPPER, params.toArray());
+        users.forEach(this::loadCollections);
+        users.sort(Comparator.comparing(User::isLookingForGroup).reversed().thenComparing(User::getName, String.CASE_INSENSITIVE_ORDER));
+        return users;
+    }
+
+    public boolean existsByEmailAndUserIdNot(String email, Long userId) {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM users
+                WHERE email = ? AND user_id <> ?
+                """,
+                Integer.class,
+                email,
+                userId
+        );
+        return count != null && count > 0;
+    }
+
+    public boolean existsByEmail(String email) {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM users
+                WHERE email = ?
+                """,
+                Integer.class,
+                email
+        );
+        return count != null && count > 0;
+    }
+
     @Transactional
     public User save(User user) {
         if (user.getUserId() == null) {
