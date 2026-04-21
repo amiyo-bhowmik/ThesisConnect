@@ -140,6 +140,31 @@ function ProfilePage() {
       .catch((err) => setError(err.message));
   }
 
+  function uploadPicture(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) {
+      return;
+    }
+
+    const body = new FormData();
+    body.append("file", file);
+    setUploading(true);
+    setStatus("");
+    setError("");
+
+    fetch("/api/profile/me/picture", {
+      method: "POST",
+      headers: buildAuthHeaders(),
+      body
+    })
+      .then((response) => handleApiResponse(response, "Image upload failed"))
+      .then((data) => {
+        setProfile(data);
+        setStatus("Profile picture uploaded successfully.");
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setUploading(false));
+  }
 
   function logout() {
     window.localStorage.removeItem("thesisconnect_token");
@@ -176,6 +201,50 @@ function ProfilePage() {
           <button className="button" type="button" onClick={logout}>Logout</button>
         </nav>
       </header>
+
+      <section className="profile-grid">
+        <aside className="panel stack">
+          <div>
+            {profile.profilePicture ? (
+              <img className="avatar" src={profile.profilePicture} alt={profile.name} />
+            ) : (
+              <div className="avatar-placeholder">{initials}</div>
+            )}
+          </div>
+          <div>
+            <h2 className="section-title">{profile.name}</h2>
+            <p className="muted">{profile.email}</p>
+            <p className="muted">{profile.department || "Department not added yet"}</p>
+            <p className="muted">{profile.university || "University not added yet"}</p>
+          </div>
+          <div>
+            <label className="field">
+              <span>Upload profile picture</span>
+              <input type="file" accept="image/png,image/jpeg,image/webp" onChange={uploadPicture} />
+            </label>
+            <div className="footer-note">{uploading ? "Uploading image..." : "JPG, PNG, and WEBP up to 5MB."}</div>
+          </div>
+          <div>
+            <div className="section-title">Bio</div>
+            <p className="muted">{profile.bio || "Add a short bio to introduce your research direction."}</p>
+          </div>
+          <div>
+            <div className="section-title">Research Interests</div>
+            <div className="chip-row">
+              {(profile.researchInterests || []).map((interest) => (
+                <div className="chip" key={interest}>{interest}</div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="section-title">Skills</div>
+            <div className="chip-row">
+              {(profile.skills || []).map((skill) => (
+                <div className="chip" key={skill}>{skill}</div>
+              ))}
+            </div>
+          </div>
+        </aside>
 
         <main className="panel">
           <h1 className="page-title" style={{fontSize: "2.8rem"}}>Edit my profile</h1>
