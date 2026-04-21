@@ -73,3 +73,54 @@
     background: rgba(26, 127, 114, 0.10);
     color: #17695f;
 }
+
+.profile-grid {
+    grid-template-columns: 360px 1fr;
+    align-items: start;
+}
+
+.avatar {
+    width: 132px;
+    height: 132px;
+    border-radius: 28px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #ead8c6, #d4ebf0);
+}
+
+.avatar-placeholder {
+    width: 132px;
+    height: 132px;
+    border-radius: 28px;
+    display: grid;
+    place-items: center;
+    font-size: 2.4rem;
+    color: white;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+}
+
+.chip-row {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
+.chip {
+    padding: 10px 12px;
+    border-radius: 999px;
+    background: #f4efe8;
+    color: #55483f;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.section-title {
+    font-size: 1.3rem;
+    margin: 0 0 14px;
+}
+
+.stack {
+    display: grid;
+    gap: 20px;
+}

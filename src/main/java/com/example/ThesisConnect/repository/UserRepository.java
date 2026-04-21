@@ -81,6 +81,100 @@ public class UserRepository {
         return Optional.of(user);
     }
 
+    public List<User> searchStudents(
+            Long currentUserId,
+            String name,
+            String email,
+            String researchInterest,
+            String department,
+            String university,
+            Boolean lookingForGroupOnly
+    ) {
+        StringBuilder sql = new StringBuilder(
+                """
+                SELECT user_id, name, email, password, department, university,
+                       academic_details, bio, profile_picture, is_looking_for_group
+                FROM users u
+                WHERE u.user_id <> ?
+                """
+        );
+        List<Object> params = new ArrayList<>();
+        params.add(currentUserId);
+
+        if (hasText(name)) {
+            sql.append(" AND LOWER(COALESCE(u.name, '')) LIKE ? ");
+            params.add(toContainsQuery(name));
+        }
+
+        if (hasText(email)) {
+            sql.append(" AND LOWER(COALESCE(u.email, '')) LIKE ? ");
+            params.add(toContainsQuery(email));
+        }
+
+        if (hasText(researchInterest)) {
+            sql.append(
+                    """
+                     AND EXISTS (
+                        SELECT 1
+                        FROM user_research_interests uri
+                        WHERE uri.user_id = u.user_id
+                          AND LOWER(uri.interest) LIKE ?
+                    )
+                    """
+            );
+            params.add(toContainsQuery(researchInterest));
+        }
+
+        if (hasText(department)) {
+            sql.append(" AND LOWER(COALESCE(u.department, '')) LIKE ? ");
+            params.add(toContainsQuery(department));
+        }
+
+        if (hasText(university)) {
+            sql.append(" AND LOWER(COALESCE(u.university, '')) LIKE ? ");
+            params.add(toContainsQuery(university));
+        }
+
+        if (Boolean.TRUE.equals(lookingForGroupOnly)) {
+            sql.append(" AND u.is_looking_for_group = ? ");
+            params.add(true);
+        }
+
+        sql.append(" ORDER BY u.is_looking_for_group DESC, LOWER(u.name) ASC ");
+
+        List<User> users = jdbcTemplate.query(sql.toString(), USER_ROW_MAPPER, params.toArray());
+        users.forEach(this::loadCollections);
+        users.sort(Comparator.comparing(User::isLookingForGroup).reversed().thenComparing(User::getName, String.CASE_INSENSITIVE_ORDER));
+        return users;
+    }
+
+    public boolean existsByEmailAndUserIdNot(String email, Long userId) {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM users
+                WHERE email = ? AND user_id <> ?
+                """,
+                Integer.class,
+                email,
+                userId
+        );
+        return count != null && count > 0;
+    }
+
+    public boolean existsByEmail(String email) {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM users
+                WHERE email = ?
+                """,
+                Integer.class,
+                email
+        );
+        return count != null && count > 0;
+    }
+
     @Transactional
     public User save(User user) {
         if (user.getUserId() == null) {
@@ -202,4 +296,53 @@ public class UserRepository {
     private String toContainsQuery(String value) {
         return "%" + value.trim().toLowerCase() + "%";
     }
+        replaceCollection(
+                "DELETE FROM user_research_interests WHERE user_id = ?",
+                "INSERT INTO user_research_interests (user_id, interest) VALUES (?, ?)",
+                user.getUserId(),
+                user.getResearchInterests()
+        );
+        replaceCollection(
+                "DELETE FROM user_skills WHERE user_id = ?",
+                "INSERT INTO user_skills (user_id, skill) VALUES (?, ?)",
+                user.getUserId(),
+                user.getSkills()
+        );
+
+        return findByEmail(user.getEmail())
+                .orElseThrow(() -> new IllegalStateException("Saved user could not be reloaded"));
+    }
+
+    private void insertUser(User user) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement statement = connection.prepareStatement(
+                    """
+                    INSERT INTO users (
+                        name, email, password, department, university,
+                        academic_details, bio, profile_picture, is_looking_for_group
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    Statement.RETURN_GENERATED_KEYS
+            );
+            statement.setString(1, user.getName());
+            statement.setString(2, user.getEmail());
+            statement.setString(3, user.getPassword());
+            statement.setString(4, user.getDepartment());
+            statement.setString(5, user.getUniversity());
+            statement.setString(6, user.getAcademicDetails());
+            statement.setString(7, user.getBio());
+            statement.setString(8, user.getProfilePicture());
+            statement.setBoolean(9, user.isLookingForGroup());
+            return statement;
+        }, keyHolder);
+
+        Number key = keyHolder.getKey();
+        if (key == null) {
+            throw new IllegalStateException("Could not generate user id");
+        }
+        user.setUserId(key.longValue());
+    }
+
+
 }
