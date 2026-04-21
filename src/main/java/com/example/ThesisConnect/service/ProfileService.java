@@ -98,4 +98,28 @@ public class ProfileService {
         }
     }
 
+    public List<ProfileResponse> searchStudents(
+            String email,
+            String name,
+            String studentEmail,
+            String researchInterest,
+            String department,
+            String university,
+            Boolean lookingForGroupOnly
+    ) {
+        User currentUser = findByEmail(email);
+        return userRepository.searchStudents(
+                        currentUser.getUserId(),
+                        trimToNull(name),
+                        trimToNull(studentEmail),
+                        trimToNull(researchInterest),
+                        trimToNull(department),
+                        trimToNull(university),
+                        lookingForGroupOnly
+                ).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+
 }

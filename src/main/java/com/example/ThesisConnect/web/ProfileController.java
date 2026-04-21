@@ -45,6 +45,28 @@ public class ProfileController {
     ) {
         return profileService.uploadProfilePicture(authentication.getName(), file);
     }
+
+    @GetMapping("/students")
+    public List<ProfileResponse> searchStudents(
+            Authentication authentication,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String interest,
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String university,
+            @RequestParam(required = false) Boolean lookingForGroup
+    ) {
+        return profileService.searchStudents(
+                authentication.getName(),
+                name,
+                email,
+                interest,
+                department,
+                university,
+                lookingForGroup
+        );
+    }
+
 }
 
 
