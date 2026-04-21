@@ -3,8 +3,11 @@ package com.example.ThesisConnect.web;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.ThesisConnect.dto.ProfileResponse;
 import com.example.ThesisConnect.dto.ProfileUpdateRequest;
@@ -35,4 +38,13 @@ public class ProfileController {
         return response;
     }
 
+    @PostMapping(path = "/me/picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ProfileResponse uploadProfilePicture(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return profileService.uploadProfilePicture(authentication.getName(), file);
+    }
 }
+
+

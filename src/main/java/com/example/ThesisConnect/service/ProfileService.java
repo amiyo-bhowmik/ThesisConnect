@@ -1,8 +1,12 @@
 package com.example.ThesisConnect.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.ThesisConnect.dto.ProfileResponse;
@@ -70,5 +74,28 @@ public class ProfileService {
         return trimmed.isEmpty() ? null : trimmed;
     }
     
+    public ProfileResponse uploadProfilePicture(String email, MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please select an image");
+        }
+
+        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only JPG, PNG, or WEBP images are allowed");
+        }
+
+        User user = findByEmail(email);
+        try {
+            Files.createDirectories(uploadRoot);
+            String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            String safeExtension = extension == null ? "png" : extension.toLowerCase();
+            String fileName = UUID.randomUUID() + "." + safeExtension;
+            Path destination = uploadRoot.resolve(fileName);
+            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+            user.setProfilePicture("/uploads/" + fileName);
+            return mapToResponse(userRepository.save(user));
+        } catch (IOException exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not store profile picture");
+        }
+    }
 
 }

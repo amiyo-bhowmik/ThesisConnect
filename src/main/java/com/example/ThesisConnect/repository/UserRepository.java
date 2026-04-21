@@ -296,4 +296,53 @@ public class UserRepository {
     private String toContainsQuery(String value) {
         return "%" + value.trim().toLowerCase() + "%";
     }
+        replaceCollection(
+                "DELETE FROM user_research_interests WHERE user_id = ?",
+                "INSERT INTO user_research_interests (user_id, interest) VALUES (?, ?)",
+                user.getUserId(),
+                user.getResearchInterests()
+        );
+        replaceCollection(
+                "DELETE FROM user_skills WHERE user_id = ?",
+                "INSERT INTO user_skills (user_id, skill) VALUES (?, ?)",
+                user.getUserId(),
+                user.getSkills()
+        );
+
+        return findByEmail(user.getEmail())
+                .orElseThrow(() -> new IllegalStateException("Saved user could not be reloaded"));
+    }
+
+    private void insertUser(User user) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement statement = connection.prepareStatement(
+                    """
+                    INSERT INTO users (
+                        name, email, password, department, university,
+                        academic_details, bio, profile_picture, is_looking_for_group
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    Statement.RETURN_GENERATED_KEYS
+            );
+            statement.setString(1, user.getName());
+            statement.setString(2, user.getEmail());
+            statement.setString(3, user.getPassword());
+            statement.setString(4, user.getDepartment());
+            statement.setString(5, user.getUniversity());
+            statement.setString(6, user.getAcademicDetails());
+            statement.setString(7, user.getBio());
+            statement.setString(8, user.getProfilePicture());
+            statement.setBoolean(9, user.isLookingForGroup());
+            return statement;
+        }, keyHolder);
+
+        Number key = keyHolder.getKey();
+        if (key == null) {
+            throw new IllegalStateException("Could not generate user id");
+        }
+        user.setUserId(key.longValue());
+    }
+
+
 }
