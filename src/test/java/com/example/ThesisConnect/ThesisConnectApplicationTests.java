@@ -1,10 +1,10 @@
-package com.thesisplatform;
+package com.example.ThesisConnect;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ThesisplatformApplicationTests {
+class ThesisConnectApplicationTests {
 
 	@Test
 	void contextLoads() {
