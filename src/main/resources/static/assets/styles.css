@@ -138,3 +138,44 @@
     grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
     align-items: start;
 }
+.directory-toolbar,
+.results-header,
+.student-card-head,
+.student-identity {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.results-column,
+.student-list,
+.detail-panel,
+.detail-block {
+    display: grid;
+    gap: 16px;
+}
+
+.student-list {
+    max-height: 720px;
+    overflow: auto;
+}
+
+.student-card {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.86);
+    text-align: left;
+    cursor: pointer;
+    display: grid;
+    gap: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.student-card:hover,
+.student-card-active {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px rgba(23, 33, 50, 0.10);
+    border-color: rgba(26, 127, 114, 0.35);
+}

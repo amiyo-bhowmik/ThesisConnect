@@ -181,4 +181,62 @@ function DiscoverPage() {
             </div>
           </div>
         </form>
+        <div className="directory-layout">
+          <div className="results-column">
+            <div className="results-header">
+              <div className="section-title" style={{marginBottom: 0}}>Student results</div>
+              <div className="footer-note">
+                {directoryLoading ? "Searching students..." : `${students.length} student${students.length === 1 ? "" : "s"} found`}
+              </div>
+            </div>
+
+            {directoryLoading ? (
+              <div className="notice">Loading discovery results...</div>
+            ) : students.length === 0 ? (
+              <div className="notice">
+                No students matched your current search. Try broadening the research interest or filter values.
+              </div>
+            ) : (
+              <div className="student-list">
+                {students.map((student) => (
+                  <button
+                    type="button"
+                    key={student.userId}
+                    className={`student-card ${selectedStudentId === student.userId ? "student-card-active" : ""}`}
+                    onClick={() => openStudent(student.userId)}
+                  >
+                    <div className="student-card-head">
+                      <div className="student-identity">
+                        {student.profilePicture ? (
+                          <img className="student-avatar" src={student.profilePicture} alt={student.name} />
+                        ) : (
+                          <div className="student-avatar student-avatar-placeholder">
+                            {getInitials(student.name)}
+                          </div>
+                        )}
+                        <div>
+                          <div className="student-name">{student.name}</div>
+                          <div className="muted compact-text">
+                            {student.department || "Department not added"}
+                          </div>
+                        </div>
+                      </div>
+                      <span className={`status-badge ${student.lookingForGroup ? "status-open" : "status-closed"}`}>
+                        {student.lookingForGroup ? "Looking for group" : "Not searching"}
+                      </span>
+                    </div>
+
+                    <div className="compact-text muted">
+                      {student.university || "University not added yet"}
+                    </div>
+
+                    <div className="chip-row compact-chips">
+                      {(student.researchInterests || []).slice(0, 3).map((interest) => (
+                        <div className="chip" key={interest}>{interest}</div>
+                      ))}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
 }
