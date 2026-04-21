@@ -1,3 +1,50 @@
+const { useEffect, useState } = React;
+
+function getToken() {
+  return window.localStorage.getItem("thesisconnect_token");
+}
+
+function buildAuthHeaders(extraHeaders) {
+  const token = getToken();
+  return {
+    ...(extraHeaders || {}),
+    Authorization: `Bearer ${token}`
+  };
+}
+
+async function handleApiResponse(response, fallbackMessage) {
+  if (response.status === 401) {
+    window.localStorage.removeItem("thesisconnect_token");
+    window.location.href = "/login.html";
+    throw new Error("Session expired. Please log in again.");
+  }
+
+  if (!response.ok) {
+    const rawBody = await response.text();
+    let message = rawBody;
+
+    try {
+      const data = rawBody ? JSON.parse(rawBody) : {};
+      message = data.message || data.detail || data.error || rawBody;
+    } catch (parseError) {
+      message = rawBody;
+    }
+
+    throw new Error(message || fallbackMessage);
+  }
+
+  return response.json();
+}
+
+function getInitials(name) {
+  return (name || "?")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 function buildStudentQuery(filters) {
   const params = new URLSearchParams();
 
@@ -27,6 +74,8 @@ function buildStudentQuery(filters) {
 
   const queryString = params.toString();
   return queryString ? `/api/profile/students?${queryString}` : "/api/profile/students";
+}
+
 function DiscoverPage() {
   const [students, setStudents] = useState([]);
   const [directoryLoading, setDirectoryLoading] = useState(true);
@@ -82,6 +131,20 @@ function DiscoverPage() {
       })
       .finally(() => setDirectoryLoading(false));
   }
+
+  function loadStudentProfile(userId) {
+    setSelectedStudentLoading(true);
+    setSelectedStudentError("");
+
+    fetch(`/api/profile/students/${userId}`, {
+      headers: buildAuthHeaders()
+    })
+      .then((response) => handleApiResponse(response, "Could not load student profile"))
+      .then((data) => setSelectedStudent(data))
+      .catch((err) => setSelectedStudentError(err.message))
+      .finally(() => setSelectedStudentLoading(false));
+  }
+
   function updateDirectoryField(event) {
     const { name, value, type, checked } = event.target;
     setDirectoryFilters((current) => ({
@@ -107,6 +170,30 @@ function DiscoverPage() {
     setDirectoryFilters(clearedFilters);
     loadStudents(clearedFilters);
   }
+
+  function openStudent(studentId) {
+    setSelectedStudentId(studentId);
+    loadStudentProfile(studentId);
+  }
+
+  function logout() {
+    window.localStorage.removeItem("thesisconnect_token");
+    window.location.href = "/login.html";
+  }
+
+  return (
+    <div className="page-shell">
+      <header className="topbar">
+        <div className="brand">
+          <div className="brand-badge">TC</div>
+          <div>ThesisConnect</div>
+        </div>
+        <nav className="nav-links">
+          <a className="button-secondary" href="/home">Homepage</a>
+          <button className="button" type="button" onClick={logout}>Logout</button>
+        </nav>
+      </header>
+
       <section className="panel stack">
         <div>
           <h1 className="page-title" style={{fontSize: "2.8rem"}}>Discover thesis partners</h1>
@@ -181,6 +268,9 @@ function DiscoverPage() {
             </div>
           </div>
         </form>
+
+        {directoryError && <div className="error">{directoryError}</div>}
+
         <div className="directory-layout">
           <div className="results-column">
             <div className="results-header">
@@ -239,4 +329,78 @@ function DiscoverPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="panel detail-panel">
+            <div className="results-header">
+              <div className="section-title" style={{marginBottom: 0}}>Student profile</div>
+              {selectedStudent && (
+                <span className={`status-badge ${selectedStudent.lookingForGroup ? "status-open" : "status-closed"}`}>
+                  {selectedStudent.lookingForGroup ? "Open to join a thesis group" : "Currently not looking"}
+                </span>
+              )}
+            </div>
+
+            {selectedStudentLoading ? (
+              <div className="notice">Loading selected student profile...</div>
+            ) : selectedStudentError ? (
+              <div className="error">{selectedStudentError}</div>
+            ) : !selectedStudent ? (
+              <div className="notice">Select a student from the results list to view the full profile.</div>
+            ) : (
+              <div className="stack">
+                <div className="student-identity">
+                  {selectedStudent.profilePicture ? (
+                    <img className="avatar" src={selectedStudent.profilePicture} alt={selectedStudent.name} />
+                  ) : (
+                    <div className="avatar-placeholder">{getInitials(selectedStudent.name)}</div>
+                  )}
+                  <div>
+                    <h3 className="section-title" style={{marginBottom: "8px"}}>{selectedStudent.name}</h3>
+                    <p className="muted compact-text">{selectedStudent.email}</p>
+                    <p className="muted compact-text">{selectedStudent.university || "University not added yet"}</p>
+                  </div>
+                </div>
+
+                <div className="detail-block">
+                  <div className="detail-label">Department</div>
+                  <div>{selectedStudent.department || "Department not added yet"}</div>
+                </div>
+
+                <div className="detail-block">
+                  <div className="detail-label">Academic details</div>
+                  <div>{selectedStudent.academicDetails || "Academic details not added yet"}</div>
+                </div>
+
+                <div className="detail-block">
+                  <div className="detail-label">Bio</div>
+                  <div>{selectedStudent.bio || "This student has not added a short bio yet."}</div>
+                </div>
+
+                <div className="detail-block">
+                  <div className="detail-label">Research interests</div>
+                  <div className="chip-row">
+                    {(selectedStudent.researchInterests || []).map((interest) => (
+                      <div className="chip" key={interest}>{interest}</div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="detail-block">
+                  <div className="detail-label">Skills</div>
+                  <div className="chip-row">
+                    {(selectedStudent.skills || []).map((skill) => (
+                      <div className="chip" key={skill}>{skill}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }
+
+ReactDOM.createRoot(document.getElementById("root")).render(<DiscoverPage />);
