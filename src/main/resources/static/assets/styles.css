@@ -1,0 +1,75 @@
+.auth-shell {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.auth-card {
+    width: min(980px, 100%);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+}
+
+.auth-panel,
+.auth-form-wrap {
+    padding: 36px;
+}
+
+.auth-panel {
+    color: white;
+    background: linear-gradient(160deg, #163b50, #0b202e 65%, #204b43);
+}
+
+.auth-form {
+    display: grid;
+    gap: 16px;
+}
+
+.field {
+    display: grid;
+    gap: 8px;
+}
+
+.field input,
+.field textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.field textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.inline-toggle {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 12px;
+}
+
+.inline-toggle input {
+    width: 18px;
+    height: 18px;
+}
+
+.notice,
+.error,
+.success {
+    padding: 14px 16px;
+    border-radius: 16px;
+}
+
+.error {
+    background: rgba(176, 41, 41, 0.10);
+    color: #8f1d1d;
+}
+
+.success {
+    background: rgba(26, 127, 114, 0.10);
+    color: #17695f;
+}
