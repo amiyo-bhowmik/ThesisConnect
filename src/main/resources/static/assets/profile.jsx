@@ -72,6 +72,7 @@ function ProfilePage() {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const token = getToken();
@@ -169,6 +170,38 @@ function ProfilePage() {
   function logout() {
     window.localStorage.removeItem("thesisconnect_token");
     window.location.href = "/login.html";
+  }
+
+  function deleteProfile() {
+    const confirmed = window.confirm(
+      "Delete your profile permanently? This cannot be undone."
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleting(true);
+    setStatus("");
+    setError("");
+
+    fetch("/api/profile/me", {
+      method: "DELETE",
+      headers: buildAuthHeaders()
+    })
+      .then((response) => {
+        if (response.status === 204 || response.status === 200) {
+          return null;
+        }
+        return handleApiResponse(response, "Profile deletion failed");
+      })
+      .then(() => {
+        window.localStorage.removeItem("thesisconnect_token");
+        window.location.href = "/login.html";
+      })
+      .catch((err) => {
+        setDeleting(false);
+        setError(err.message);
+      });
   }
 
   if (error && !profile) {
@@ -332,6 +365,14 @@ function ProfilePage() {
 
             <div className="nav-links">
               <button className="button" type="submit">Save profile changes</button>
+              <button
+                className="button-danger"
+                type="button"
+                onClick={deleteProfile}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting profile..." : "Delete profile"}
+              </button>
             </div>
           </form>
         </main>

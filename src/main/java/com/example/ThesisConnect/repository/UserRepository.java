@@ -175,6 +175,16 @@ public class UserRepository {
         return count != null && count > 0;
     }
 
+    public void deleteById(Long userId) {
+        jdbcTemplate.update(
+                """
+                DELETE FROM users
+                WHERE user_id = ?
+                """,
+                userId
+        );
+    }
+
     @Transactional
     public User save(User user) {
         if (user.getUserId() == null) {
