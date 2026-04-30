@@ -109,9 +109,32 @@ public class ProfileService {
         }
     }
 
+    public void deleteProfile(String email) {
+        User user = findByEmail(email);
+        deleteStoredProfilePicture(user.getProfilePicture());
+        userRepository.deleteById(user.getUserId());
+    }
+
     private User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    private void deleteStoredProfilePicture(String profilePicture) {
+        if (profilePicture == null || !profilePicture.startsWith("/uploads/")) {
+            return;
+        }
+
+        Path picturePath = uploadRoot.resolve(profilePicture.substring("/uploads/".length())).normalize();
+        if (!picturePath.startsWith(uploadRoot)) {
+            return;
+        }
+
+        try {
+            Files.deleteIfExists(picturePath);
+        } catch (IOException exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not delete profile picture");
+        }
     }
 
     private ProfileResponse mapToResponse(User user) {
@@ -150,4 +173,5 @@ public class ProfileService {
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
     }
+
 }
