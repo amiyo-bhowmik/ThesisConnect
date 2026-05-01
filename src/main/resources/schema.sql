@@ -26,3 +26,25 @@ CREATE TABLE IF NOT EXISTS user_skills (
     CONSTRAINT fk_user_skills_user
         FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS thesis_groups (
+    group_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    topic VARCHAR(160) NOT NULL,
+    description VARCHAR(1000) NOT NULL,
+    admin_user_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_thesis_groups_admin
+        FOREIGN KEY (admin_user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS group_members (
+    group_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    joined_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (group_id, user_id),
+    CONSTRAINT fk_group_members_group
+        FOREIGN KEY (group_id) REFERENCES thesis_groups(group_id) ON DELETE CASCADE,
+    CONSTRAINT fk_group_members_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
