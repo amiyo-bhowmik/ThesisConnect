@@ -48,3 +48,33 @@ CREATE TABLE IF NOT EXISTS group_members (
     CONSTRAINT fk_group_members_user
         FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS join_requests (
+    request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sender_user_id BIGINT NOT NULL,
+    recipient_user_id BIGINT,
+    group_id BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    request_type VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP,
+    reviewed_by_user_id BIGINT,
+    CONSTRAINT fk_join_requests_sender
+        FOREIGN KEY (sender_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_join_requests_recipient
+        FOREIGN KEY (recipient_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_join_requests_group
+        FOREIGN KEY (group_id) REFERENCES thesis_groups(group_id) ON DELETE CASCADE,
+    CONSTRAINT fk_join_requests_reviewer
+        FOREIGN KEY (reviewed_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    notification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    message VARCHAR(400) NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT fk_notifications_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
