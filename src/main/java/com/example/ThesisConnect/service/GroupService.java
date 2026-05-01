@@ -47,6 +47,7 @@ public class GroupService {
         );
         return getGroup(currentUserEmail, groupId);
     }
+
     public List<ThesisGroupSummaryResponse> listGroups(String currentUserEmail) {
         User currentUser = findByEmail(currentUserEmail);
         return groupRepository.findAllGroups().stream()
@@ -119,9 +120,156 @@ public class GroupService {
         );
     }
 
+    @Transactional
+    public ThesisGroupResponse inviteMember(String currentUserEmail, Long groupId, Long targetUserId) {
+        User currentUser = findByEmail(currentUserEmail);
+        User targetUser = findById(targetUserId);
+        GroupRepository.GroupRow groupRow = findGroupRow(groupId);
+        requireAdmin(groupId, currentUser.getUserId());
+
+        if (groupRepository.isMember(groupId, targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Student is already a member of this thesis group");
+        }
+
+        if (groupRepository.findPendingInvitationBySender(currentUser.getUserId(), targetUserId, groupId).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An invitation is already pending for this student");
+        }
+
+        groupRepository.createJoinRequest(currentUser.getUserId(), targetUserId, groupId, RequestType.INVITATION);
+        groupRepository.createNotification(
+                targetUserId,
+                currentUser.getName() + " invited you to join the thesis group \"" + groupRow.topic() + "\"."
+        );
+        return getGroup(currentUserEmail, groupId);
+    }
+
+    @Transactional
+    public ThesisGroupResponse sendJoinRequest(String currentUserEmail, Long groupId) {
+        User currentUser = findByEmail(currentUserEmail);
+        GroupRepository.GroupRow groupRow = findGroupRow(groupId);
+        User admin = findById(groupRow.adminUserId());
+
+        if (groupRepository.isMember(groupId, currentUser.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "You are already a member of this thesis group");
+        }
+
+        if (groupRepository.findPendingJoinRequest(currentUser.getUserId(), groupId).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "You already have a pending join request for this group");
+        }
+
+        groupRepository.createJoinRequest(currentUser.getUserId(), null, groupId, RequestType.JOIN_REQUEST);
+        groupRepository.createNotification(
+                admin.getUserId(),
+                currentUser.getName() + " requested to join the thesis group \"" + groupRow.topic() + "\"."
+        );
+        return getGroup(currentUserEmail, groupId);
+    }
+
+    @Transactional
+    public ThesisGroupResponse approveRequest(String currentUserEmail, Long groupId, Long requestId) {
+        User currentUser = findByEmail(currentUserEmail);
+        GroupRepository.JoinRequestRow requestRow = findJoinRequest(groupId, requestId);
+        GroupRepository.GroupRow groupRow = findGroupRow(groupId);
+
+        if (requestRow.requestType() == RequestType.JOIN_REQUEST) {
+            requireAdmin(groupId, currentUser.getUserId());
+            User requester = findById(requestRow.senderUserId());
+            addMemberIfMissing(groupId, requester.getUserId());
+            groupRepository.updateJoinRequestStatus(requestId, RequestStatus.APPROVED, currentUser.getUserId());
+            groupRepository.rejectOtherPendingRequestsForUserInGroup(requestId, groupId, requester.getUserId());
+            groupRepository.createNotification(
+                    requester.getUserId(),
+                    "Your request to join \"" + groupRow.topic() + "\" was approved."
+            );
+        } else {
+            if (requestRow.recipientUserId() == null || !requestRow.recipientUserId().equals(currentUser.getUserId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot accept this invitation");
+            }
+            addMemberIfMissing(groupId, currentUser.getUserId());
+            groupRepository.updateJoinRequestStatus(requestId, RequestStatus.APPROVED, currentUser.getUserId());
+            groupRepository.rejectOtherPendingRequestsForUserInGroup(requestId, groupId, currentUser.getUserId());
+            groupRepository.createNotification(
+                    requestRow.senderUserId(),
+                    currentUser.getName() + " accepted the invitation to join \"" + groupRow.topic() + "\"."
+            );
+        }
+
+        return getGroup(currentUserEmail, groupId);
+    }
+
+    @Transactional
+    public ThesisGroupResponse rejectRequest(String currentUserEmail, Long groupId, Long requestId) {
+        User currentUser = findByEmail(currentUserEmail);
+        GroupRepository.JoinRequestRow requestRow = findJoinRequest(groupId, requestId);
+        GroupRepository.GroupRow groupRow = findGroupRow(groupId);
+
+        if (requestRow.requestType() == RequestType.JOIN_REQUEST) {
+            requireAdmin(groupId, currentUser.getUserId());
+            groupRepository.updateJoinRequestStatus(requestId, RequestStatus.REJECTED, currentUser.getUserId());
+            groupRepository.createNotification(
+                    requestRow.senderUserId(),
+                    "Your request to join \"" + groupRow.topic() + "\" was rejected."
+            );
+        } else {
+            if (requestRow.recipientUserId() == null || !requestRow.recipientUserId().equals(currentUser.getUserId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot reject this invitation");
+            }
+            groupRepository.updateJoinRequestStatus(requestId, RequestStatus.REJECTED, currentUser.getUserId());
+            groupRepository.createNotification(
+                    requestRow.senderUserId(),
+                    currentUser.getName() + " rejected the invitation to join \"" + groupRow.topic() + "\"."
+            );
+        }
+
+        return getGroup(currentUserEmail, groupId);
+    }
+
+    @Transactional
+    public ThesisGroupResponse assignAdmin(String currentUserEmail, Long groupId, Long targetUserId) {
+        User currentUser = findByEmail(currentUserEmail);
+        User targetUser = findById(targetUserId);
+        requireAdmin(groupId, currentUser.getUserId());
+
+        if (!groupRepository.isMember(groupId, targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only group members can be assigned as admins");
+        }
+
+        groupRepository.setAdmin(groupId, targetUserId, true);
+        groupRepository.createNotification(
+                targetUser.getUserId(),
+                "You were assigned as an admin of a thesis group."
+        );
+        return getGroup(currentUserEmail, groupId);
+    }
+
+    public List<NotificationResponse> listNotifications(String currentUserEmail) {
+        User currentUser = findByEmail(currentUserEmail);
+        return groupRepository.findNotificationsByUserId(currentUser.getUserId()).stream()
+                .map(this::mapNotification)
+                .toList();
+    }
+
     private GroupRepository.GroupRow findGroupRow(Long groupId) {
         return groupRepository.findGroupById(groupId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Thesis group not found"));
+    }
+
+    private GroupRepository.JoinRequestRow findJoinRequest(Long groupId, Long requestId) {
+        GroupRepository.JoinRequestRow requestRow = groupRepository.findJoinRequestById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Join request not found"));
+        if (!requestRow.groupId().equals(groupId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Join request does not belong to this group");
+        }
+        if (requestRow.status() != RequestStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This join request has already been processed");
+        }
+        return requestRow;
+    }
+
+    private void addMemberIfMissing(Long groupId, Long userId) {
+        if (!groupRepository.isMember(groupId, userId)) {
+            groupRepository.addMember(groupId, userId, false);
+        }
     }
 
     private void requireAdmin(Long groupId, Long userId) {
@@ -142,6 +290,59 @@ public class GroupService {
         thesisGroup.setMembers(members);
         thesisGroup.setDocuments(List.of());
         return thesisGroup;
+    }
+
+    private List<GroupMemberResponse> buildMemberResponses(Long groupId, List<User> members) {
+        return members.stream()
+                .map(member -> new GroupMemberResponse(
+                        member.getUserId(),
+                        member.getName(),
+                        member.getEmail(),
+                        member.getDepartment(),
+                        member.getUniversity(),
+                        member.getAcademicDetails(),
+                        member.getBio(),
+                        member.getProfilePicture(),
+                        List.copyOf(member.getResearchInterests()),
+                        List.copyOf(member.getSkills()),
+                        member.isLookingForGroup(),
+                        groupRepository.isAdmin(groupId, member.getUserId())
+                ))
+                .toList();
+    }
+
+    private JoinRequestResponse mapJoinRequest(GroupRepository.JoinRequestRow row) {
+        JoinRequest joinRequest = new JoinRequest();
+        joinRequest.setRequestId(row.requestId());
+        joinRequest.setSender(findById(row.senderUserId()));
+        joinRequest.setRecipient(row.recipientUserId() == null ? null : findById(row.recipientUserId()));
+        joinRequest.setGroup(mapGroup(findGroupRow(row.groupId())));
+        joinRequest.setStatus(row.status());
+        joinRequest.setRequestType(row.requestType());
+        return new JoinRequestResponse(
+                joinRequest.getRequestId(),
+                mapProfileResponse(joinRequest.getSender()),
+                joinRequest.getRecipient() == null ? null : mapProfileResponse(joinRequest.getRecipient()),
+                joinRequest.getGroup().getGroupId(),
+                joinRequest.getGroup().getTopic(),
+                joinRequest.getStatus().name(),
+                joinRequest.getRequestType().name()
+        );
+    }
+
+    private NotificationResponse mapNotification(GroupRepository.NotificationRow row) {
+        Notification notification = new Notification();
+        notification.setNotificationId(row.notificationId());
+        notification.setUser(findById(row.userId()));
+        notification.setMessage(row.message());
+        notification.setTimestamp(row.timestamp());
+        notification.setRead(row.isRead());
+        return new NotificationResponse(
+                notification.getNotificationId(),
+                notification.getMessage(),
+                notification.getTimestamp(),
+                notification.isRead()
+        );
     }
 
     private User findByEmail(String email) {
@@ -169,22 +370,4 @@ public class GroupService {
                 user.isLookingForGroup()
         );
     }
-
-    private List<GroupMemberResponse> buildMemberResponses(Long groupId, List<User> members) {
-        return members.stream()
-                .map(member -> new GroupMemberResponse(
-                        member.getUserId(),
-                        member.getName(),
-                        member.getEmail(),
-                        member.getDepartment(),
-                        member.getUniversity(),
-                        member.getAcademicDetails(),
-                        member.getBio(),
-                        member.getProfilePicture(),
-                        List.copyOf(member.getResearchInterests()),
-                        List.copyOf(member.getSkills()),
-                        member.isLookingForGroup(),
-                        groupRepository.isAdmin(groupId, member.getUserId())
-                ))
-                .toList();
-    }
+}

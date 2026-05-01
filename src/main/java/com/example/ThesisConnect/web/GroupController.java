@@ -44,3 +44,50 @@ public class GroupController {
     public ThesisGroupResponse getGroup(Authentication authentication, @PathVariable Long groupId) {
         return groupService.getGroup(authentication.getName(), groupId);
     }
+
+    @PostMapping("/{groupId}/join-requests")
+    public ThesisGroupResponse sendJoinRequest(Authentication authentication, @PathVariable Long groupId) {
+        return groupService.sendJoinRequest(authentication.getName(), groupId);
+    }
+
+    @PostMapping("/{groupId}/invitations")
+    public ThesisGroupResponse inviteMember(
+            Authentication authentication,
+            @PathVariable Long groupId,
+            @Valid @RequestBody InviteMemberRequest request
+    ) {
+        return groupService.inviteMember(authentication.getName(), groupId, request.getUserId());
+    }
+
+    @PostMapping("/{groupId}/requests/{requestId}/approve")
+    public ThesisGroupResponse approveRequest(
+            Authentication authentication,
+            @PathVariable Long groupId,
+            @PathVariable Long requestId
+    ) {
+        return groupService.approveRequest(authentication.getName(), groupId, requestId);
+    }
+
+    @PostMapping("/{groupId}/requests/{requestId}/reject")
+    public ThesisGroupResponse rejectRequest(
+            Authentication authentication,
+            @PathVariable Long groupId,
+            @PathVariable Long requestId
+    ) {
+        return groupService.rejectRequest(authentication.getName(), groupId, requestId);
+    }
+
+    @PostMapping("/{groupId}/members/{userId}/admins")
+    public ThesisGroupResponse assignAdmin(
+            Authentication authentication,
+            @PathVariable Long groupId,
+            @PathVariable Long userId
+    ) {
+        return groupService.assignAdmin(authentication.getName(), groupId, userId);
+    }
+
+    @GetMapping("/notifications")
+    public List<NotificationResponse> listNotifications(Authentication authentication) {
+        return groupService.listNotifications(authentication.getName());
+    }
+}
