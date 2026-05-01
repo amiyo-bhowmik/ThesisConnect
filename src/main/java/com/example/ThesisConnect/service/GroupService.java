@@ -169,3 +169,22 @@ public class GroupService {
                 user.isLookingForGroup()
         );
     }
+
+    private List<GroupMemberResponse> buildMemberResponses(Long groupId, List<User> members) {
+        return members.stream()
+                .map(member -> new GroupMemberResponse(
+                        member.getUserId(),
+                        member.getName(),
+                        member.getEmail(),
+                        member.getDepartment(),
+                        member.getUniversity(),
+                        member.getAcademicDetails(),
+                        member.getBio(),
+                        member.getProfilePicture(),
+                        List.copyOf(member.getResearchInterests()),
+                        List.copyOf(member.getSkills()),
+                        member.isLookingForGroup(),
+                        groupRepository.isAdmin(groupId, member.getUserId())
+                ))
+                .toList();
+    }
