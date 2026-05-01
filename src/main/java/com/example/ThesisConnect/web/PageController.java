@@ -25,4 +25,9 @@ public class PageController {
     public String discover() {
         return "forward:/discover.html";
     }
+    
+    @GetMapping("/groups")
+    public String groups() {
+        return "forward:/groups.html";
+    }
 }
