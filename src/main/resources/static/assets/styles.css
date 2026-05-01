@@ -38,12 +38,6 @@ select {
     font: inherit;
 }
 
-button,
-input,
-textarea {
-    font: inherit;
-}
-
 .page-shell {
     width: min(1180px, calc(100% - 32px));
     margin: 0 auto;
@@ -220,15 +214,6 @@ textarea {
     display: grid;
     gap: 16px;
 }
-.field input,
-.field textarea,
-.select-input {
-    width: 100%;
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 14px 16px;
-    background: rgba(255, 255, 255, 0.9);
-}
 
 .field {
     display: grid;
@@ -236,7 +221,8 @@ textarea {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.select-input {
     width: 100%;
     border: 1px solid var(--line);
     border-radius: 16px;
@@ -323,6 +309,17 @@ textarea {
     margin: 0 0 14px;
 }
 
+.stack {
+    display: grid;
+    gap: 20px;
+}
+
+.footer-note {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
 .directory-grid,
 .directory-layout,
 .group-layout,
@@ -354,11 +351,6 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.stack {
-    display: grid;
-    gap: 20px;
-}
-
 .group-card-head,
 .group-header,
 .group-badges {
@@ -372,36 +364,15 @@ textarea {
     align-items: flex-start;
 }
 
-.member-card,
-.notification-card,
-.invitation-box {
-    border: 1px solid var(--line);
-}
-
 .group-badges {
     flex-wrap: wrap;
     justify-content: flex-end;
 }
 
-.footer-note {
-    margin-top: 18px;
-    color: var(--muted);
-    font-size: 0.95rem;
-}
-
-.directory-grid,
-.directory-layout {
-    display: grid;
-    gap: 18px;
-}
-
-.directory-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
-.directory-layout {
-    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-    align-items: start;
+.member-card,
+.notification-card,
+.invitation-box {
+    border: 1px solid var(--line);
 }
 
 .directory-toolbar,
@@ -493,31 +464,6 @@ textarea {
 .status-closed {
     background: rgba(90, 100, 120, 0.14);
     color: #4e5a71;
-}
-
-@media (max-width: 920px) {
-    .hero,
-    .auth-card,
-    .profile-grid,
-    .card-grid,
-    .hero-stats,
-    .info-grid,
-    .directory-grid,
-    .directory-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .directory-toolbar,
-    .results-header,
-    .student-card-head,
-    .student-identity {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .student-list {
-        max-height: none;
-    }
 }
 
 @media (max-width: 920px) {
