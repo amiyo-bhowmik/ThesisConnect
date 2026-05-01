@@ -33,6 +33,13 @@ a {
 
 button,
 input,
+textarea,
+select {
+    font: inherit;
+}
+
+button,
+input,
 textarea {
     font: inherit;
 }
@@ -213,6 +220,15 @@ textarea {
     display: grid;
     gap: 16px;
 }
+.field input,
+.field textarea,
+.select-input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.9);
+}
 
 .field {
     display: grid;
@@ -307,9 +323,50 @@ textarea {
     margin: 0 0 14px;
 }
 
+.directory-grid,
+.directory-layout,
+.group-layout,
+.group-admin-grid,
+.group-members-grid {
+    display: grid;
+    gap: 18px;
+}
+
+.directory-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.directory-layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    align-items: start;
+}
+
+.group-layout {
+    grid-template-columns: 360px minmax(0, 1fr);
+    align-items: start;
+}
+
 .stack {
     display: grid;
     gap: 20px;
+}
+
+.group-card-head,
+.group-header,
+.group-badges {
+    display: flex;
+    gap: 12px;
+}
+
+.group-card-head,
+.group-header {
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.group-badges {
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .footer-note {
@@ -446,5 +503,39 @@ textarea {
 
     .student-list {
         max-height: none;
+    }
+}
+
+@media (max-width: 920px) {
+    .hero,
+    .auth-card,
+    .profile-grid,
+    .card-grid,
+    .hero-stats,
+    .info-grid,
+    .directory-grid,
+    .directory-layout,
+    .group-layout,
+    .group-admin-grid,
+    .group-members-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .directory-toolbar,
+    .results-header,
+    .student-card-head,
+    .student-identity,
+    .group-header,
+    .group-card-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .student-list {
+        max-height: none;
+    }
+
+    .group-badges {
+        justify-content: flex-start;
     }
 }
