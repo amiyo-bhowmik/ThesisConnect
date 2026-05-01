@@ -33,6 +33,8 @@ public class SecurityConfig {
                                 "/discover",
                                 "/discover.html",
                                 "/profile.html",
+                                "/groups",
+                                "/groups.html",
                                 "/assets/**",
                                 "/uploads/**",
                                 "/api/auth/**",
