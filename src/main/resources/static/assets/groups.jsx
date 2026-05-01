@@ -201,6 +201,76 @@ function GroupsPage() {
     );
   }
 
+  function sendJoinRequest() {
+    if (!selectedGroup) {
+      return;
+    }
+
+    runGroupAction(
+      `join-${selectedGroup.groupId}`,
+      () =>
+        fetch(`/api/groups/${selectedGroup.groupId}/join-requests`, {
+          method: "POST",
+          headers: buildAuthHeaders()
+        }).then((response) => handleApiResponse(response, "Could not send join request")),
+      "Join request sent."
+    );
+  }
+
+  function inviteMember(event) {
+    event.preventDefault();
+    if (!selectedGroup || !inviteUserId) {
+      return;
+    }
+
+    runGroupAction(
+      `invite-${selectedGroup.groupId}`,
+      () =>
+        fetch(`/api/groups/${selectedGroup.groupId}/invitations`, {
+          method: "POST",
+          headers: {
+            ...buildAuthHeaders({
+              "Content-Type": "application/json"
+            })
+          },
+          body: JSON.stringify({ userId: Number(inviteUserId) })
+        }).then((response) => handleApiResponse(response, "Could not send invitation")),
+      "Invitation sent."
+    );
+  }
+
+  function handleRequestAction(requestId, action) {
+    if (!selectedGroup) {
+      return;
+    }
+
+    runGroupAction(
+      `${action}-${requestId}`,
+      () =>
+        fetch(`/api/groups/${selectedGroup.groupId}/requests/${requestId}/${action}`, {
+          method: "POST",
+          headers: buildAuthHeaders()
+        }).then((response) => handleApiResponse(response, `Could not ${action} request`)),
+      action === "approve" ? "Request updated successfully." : "Request rejected successfully."
+    );
+  }
+
+  function assignAdmin(userId) {
+    if (!selectedGroup) {
+      return;
+    }
+
+    runGroupAction(
+      `assign-admin-${userId}`,
+      () =>
+        fetch(`/api/groups/${selectedGroup.groupId}/members/${userId}/admins`, {
+          method: "POST",
+          headers: buildAuthHeaders()
+        }).then((response) => handleApiResponse(response, "Could not assign admin")),
+      "Group admin updated."
+    );
+  }
+
   function openGroup(groupId) {
     setSelectedGroupId(groupId);
     loadGroup(groupId);
@@ -370,7 +440,49 @@ function GroupsPage() {
                     <span className="chip">{selectedGroup.members.length} member{selectedGroup.members.length === 1 ? "" : "s"}</span>
                   </div>
                 </div>
-                
+
+                {!selectedGroup.currentUserMember && !selectedGroup.currentUserJoinRequestStatus && !selectedGroup.currentUserInvitationStatus && (
+                  <button
+                    className="button"
+                    type="button"
+                    onClick={sendJoinRequest}
+                    disabled={busyAction === `join-${selectedGroup.groupId}`}
+                  >
+                    {busyAction === `join-${selectedGroup.groupId}` ? "Sending request..." : "Request to join this group"}
+                  </button>
+                )}
+
+                {selectedGroup.currentUserJoinRequestStatus && (
+                  <div className="notice">Your join request is pending review by the group admins.</div>
+                )}
+
+                {currentInvitation && (
+                  <div className="panel stack invitation-box">
+                    <div className="section-title">Pending invitation</div>
+                    <p className="muted compact-text">
+                      {currentInvitation.sender.name} invited you to join this group.
+                    </p>
+                    <div className="nav-links">
+                      <button
+                        className="button"
+                        type="button"
+                        onClick={() => handleRequestAction(currentInvitation.requestId, "approve")}
+                        disabled={busyAction === `approve-${currentInvitation.requestId}`}
+                      >
+                        Accept invitation
+                      </button>
+                      <button
+                        className="button-danger"
+                        type="button"
+                        onClick={() => handleRequestAction(currentInvitation.requestId, "reject")}
+                        disabled={busyAction === `reject-${currentInvitation.requestId}`}
+                      >
+                        Reject invitation
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="section-title">Members and profiles</div>
                 <div className="group-members-grid">
                   {(selectedGroup.members || []).map((member) => (
@@ -412,3 +524,101 @@ function GroupsPage() {
                     </article>
                   ))}
                 </div>
+
+                {selectedGroup.currentUserAdmin && (
+                  <div className="group-admin-grid">
+                    <section className="panel stack">
+                      <div className="section-title">Invite student</div>
+                      <form className="auth-form" onSubmit={inviteMember}>
+                        <label className="field">
+                          <span>Choose student</span>
+                          <select
+                            className="select-input"
+                            value={inviteUserId}
+                            onChange={(event) => setInviteUserId(event.target.value)}
+                            disabled={studentsLoading || availableInviteStudents.length === 0}
+                          >
+                            <option value="">Select a student</option>
+                            {availableInviteStudents.map((student) => (
+                              <option key={student.userId} value={student.userId}>
+                                {student.name} - {student.email}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <button className="button" type="submit" disabled={!inviteUserId || busyAction === `invite-${selectedGroup.groupId}`}>
+                          {busyAction === `invite-${selectedGroup.groupId}` ? "Sending..." : "Send invitation"}
+                        </button>
+                      </form>
+                      {!studentsLoading && availableInviteStudents.length === 0 && (
+                        <div className="notice">There are no additional students available to invite right now.</div>
+                      )}
+                    </section>
+
+                    <section className="panel stack">
+                      <div className="section-title">Pending join requests</div>
+                      {selectedGroup.pendingJoinRequests.length === 0 ? (
+                        <div className="notice">No pending join requests.</div>
+                      ) : (
+                        <div className="stack">
+                          {selectedGroup.pendingJoinRequests.map((request) => (
+                            <div className="notification-card" key={request.requestId}>
+                              <div>
+                                <strong>{request.sender.name}</strong> wants to join this group.
+                              </div>
+                              <div className="footer-note">{request.sender.email}</div>
+                              <div className="nav-links">
+                                <button
+                                  className="button"
+                                  type="button"
+                                  onClick={() => handleRequestAction(request.requestId, "approve")}
+                                  disabled={busyAction === `approve-${request.requestId}`}
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  className="button-danger"
+                                  type="button"
+                                  onClick={() => handleRequestAction(request.requestId, "reject")}
+                                  disabled={busyAction === `reject-${request.requestId}`}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+
+                    <section className="panel stack">
+                      <div className="section-title">Pending invitations</div>
+                      {selectedGroup.pendingInvitations.length === 0 ? (
+                        <div className="notice">No pending invitations.</div>
+                      ) : (
+                        <div className="stack">
+                          {selectedGroup.pendingInvitations.map((request) => (
+                            <div className="notification-card" key={request.requestId}>
+                              <div>
+                                Invitation sent to <strong>{request.recipient ? request.recipient.name : "student"}</strong>.
+                              </div>
+                              <div className="footer-note">
+                                {request.recipient ? request.recipient.email : "Awaiting response"}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<GroupsPage />);
