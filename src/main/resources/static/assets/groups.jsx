@@ -370,3 +370,45 @@ function GroupsPage() {
                     <span className="chip">{selectedGroup.members.length} member{selectedGroup.members.length === 1 ? "" : "s"}</span>
                   </div>
                 </div>
+                
+                <div className="section-title">Members and profiles</div>
+                <div className="group-members-grid">
+                  {(selectedGroup.members || []).map((member) => (
+                    <article className="panel member-card" key={member.userId}>
+                      <div className="student-identity">
+                        {member.profilePicture ? (
+                          <img className="student-avatar" src={member.profilePicture} alt={member.name} />
+                        ) : (
+                          <div className="student-avatar student-avatar-placeholder">
+                            {getInitials(member.name)}
+                          </div>
+                        )}
+                        <div>
+                          <div className="student-name">{member.name}</div>
+                          <div className="muted compact-text">{member.email}</div>
+                          <div className="muted compact-text">{member.department || "Department not added"}</div>
+                        </div>
+                      </div>
+                      <div className="chip-row compact-chips">
+                        <div className="chip">{member.admin ? "Admin" : "Member"}</div>
+                        <div className="chip">{member.university || "University missing"}</div>
+                      </div>
+                      <p className="muted compact-text">{member.bio || "No bio added yet."}</p>
+                      <div className="chip-row compact-chips">
+                        {(member.researchInterests || []).slice(0, 4).map((interest) => (
+                          <div className="chip" key={interest}>{interest}</div>
+                        ))}
+                      </div>
+                      {selectedGroup.currentUserAdmin && !member.admin && (
+                        <button
+                          className="button-secondary"
+                          type="button"
+                          onClick={() => assignAdmin(member.userId)}
+                          disabled={busyAction === `assign-admin-${member.userId}`}
+                        >
+                          Make admin
+                        </button>
+                      )}
+                    </article>
+                  ))}
+                </div>

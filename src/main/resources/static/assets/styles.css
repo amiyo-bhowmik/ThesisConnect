@@ -346,6 +346,14 @@ textarea {
     align-items: start;
 }
 
+.group-admin-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.group-members-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .stack {
     display: grid;
     gap: 20px;
@@ -362,6 +370,12 @@ textarea {
 .group-header {
     justify-content: space-between;
     align-items: flex-start;
+}
+
+.member-card,
+.notification-card,
+.invitation-box {
+    border: 1px solid var(--line);
 }
 
 .group-badges {
