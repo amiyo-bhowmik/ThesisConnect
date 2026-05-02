@@ -189,6 +189,7 @@ function DiscoverPage() {
           <div>ThesisConnect</div>
         </div>
         <nav className="nav-links">
+          <a className="button-secondary" href="/groups.html">Thesis groups</a>
           <a className="button-secondary" href="/home">Homepage</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
         </nav>

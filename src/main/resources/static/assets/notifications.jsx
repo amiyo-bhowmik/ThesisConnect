@@ -78,10 +78,7 @@ function NotificationsPage() {
         </div>
         <nav className="nav-links">
           <a className="button-secondary" href="/groups.html">Thesis groups</a>
-          <a className="button-secondary" href="/create-group.html">Create thesis group</a>
-          <a className="button-secondary" href="/available-groups.html">Available groups</a>
           <a className="button-secondary" href="/home">Homepage</a>
-          <a className="button-secondary" href="/discover.html">Discover students</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
         </nav>
       </header>

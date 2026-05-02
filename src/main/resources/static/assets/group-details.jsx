@@ -55,6 +55,7 @@ function GroupDetailsPage() {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [busyAction, setBusyAction] = useState("");
+  const [selectedMember, setSelectedMember] = useState(null);
 
   const params = new URLSearchParams(window.location.search);
   const groupId = params.get("groupId");
@@ -214,6 +215,14 @@ function GroupDetailsPage() {
     ? (group.pendingInvitations || [])[0]
     : null;
 
+  const allMembers = useMemo(() => {
+    if (!group) return [];
+    const members = group.members || [];
+    const adminAlreadyMember = members.some((m) => m.userId === group.admin.userId);
+    if (adminAlreadyMember) return members;
+    return [{ ...group.admin, admin: true }, ...members];
+  }, [group]);
+
   return (
     <div className="page-shell">
       <header className="topbar">
@@ -223,11 +232,7 @@ function GroupDetailsPage() {
         </div>
         <nav className="nav-links">
           <a className="button-secondary" href="/groups.html">Thesis groups</a>
-          <a className="button-secondary" href="/available-groups.html">Available groups</a>
-          <a className="button-secondary" href="/create-group.html">Create thesis group</a>
-          <a className="button-secondary" href="/notifications.html">Notifications</a>
           <a className="button-secondary" href="/home">Homepage</a>
-          <a className="button-secondary" href="/discover.html">Discover students</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
         </nav>
       </header>
@@ -303,45 +308,111 @@ function GroupDetailsPage() {
             )}
 
             <div className="section-title">Members and profiles</div>
-            <div className="group-members-grid">
-              {(group.members || []).map((member) => (
-                <article className="panel member-card" key={member.userId}>
-                  <div className="student-identity">
-                    {member.profilePicture ? (
-                      <img className="student-avatar" src={member.profilePicture} alt={member.name} />
-                    ) : (
-                      <div className="student-avatar student-avatar-placeholder">
-                        {getInitials(member.name)}
-                      </div>
-                    )}
-                    <div>
-                      <div className="student-name">{member.name}</div>
-                      <div className="muted compact-text">{member.email}</div>
-                      <div className="muted compact-text">{member.department || "Department not added"}</div>
-                    </div>
-                  </div>
-                  <div className="chip-row compact-chips">
-                    <div className="chip">{member.admin ? "Admin" : "Member"}</div>
-                    <div className="chip">{member.university || "University missing"}</div>
-                  </div>
-                  <p className="muted compact-text">{member.bio || "No bio added yet."}</p>
-                  <div className="chip-row compact-chips">
-                    {(member.researchInterests || []).slice(0, 4).map((interest) => (
-                      <div className="chip" key={interest}>{interest}</div>
-                    ))}
-                  </div>
-                  {group.currentUserAdmin && !member.admin && (
-                    <button
-                      className="button-secondary"
-                      type="button"
-                      onClick={() => assignAdmin(member.userId)}
-                      disabled={busyAction === `assign-admin-${member.userId}`}
+            <div className="directory-layout">
+              <div className="results-column">
+                <div className="group-members-grid">
+                  {allMembers.map((member) => (
+                    <article
+                      className={`panel member-card ${selectedMember && selectedMember.userId === member.userId ? "student-card-active" : ""}`}
+                      key={member.userId}
+                      onClick={() => setSelectedMember(member)}
+                      style={{ cursor: "pointer" }}
                     >
-                      Make admin
-                    </button>
-                  )}
-                </article>
-              ))}
+                      <div className="student-identity">
+                        {member.profilePicture ? (
+                          <img className="student-avatar" src={member.profilePicture} alt={member.name} />
+                        ) : (
+                          <div className="student-avatar student-avatar-placeholder">
+                            {getInitials(member.name)}
+                          </div>
+                        )}
+                        <div>
+                          <div className="student-name">{member.name}</div>
+                          <div className="muted compact-text">{member.email}</div>
+                          <div className="muted compact-text">{member.department || "Department not added"}</div>
+                        </div>
+                      </div>
+                      <div className="chip-row compact-chips">
+                        <div className="chip">{member.admin ? "Admin" : "Member"}</div>
+                        <div className="chip">{member.university || "University missing"}</div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="panel detail-panel">
+                <div className="results-header">
+                  <div className="section-title" style={{marginBottom: 0}}>Member profile</div>
+                </div>
+                {!selectedMember ? (
+                  <div className="notice">Click a member card to view their full profile.</div>
+                ) : (
+                  <div className="stack">
+                    <div className="student-identity">
+                      {selectedMember.profilePicture ? (
+                        <img className="avatar" src={selectedMember.profilePicture} alt={selectedMember.name} />
+                      ) : (
+                        <div className="avatar-placeholder">{getInitials(selectedMember.name)}</div>
+                      )}
+                      <div>
+                        <h3 className="section-title" style={{marginBottom: "8px"}}>{selectedMember.name}</h3>
+                        <p className="muted compact-text">{selectedMember.email}</p>
+                        <p className="muted compact-text">{selectedMember.university || "University not added yet"}</p>
+                      </div>
+                    </div>
+
+                    <div className="detail-block">
+                      <div className="detail-label">Role</div>
+                      <div>{selectedMember.admin ? "Admin" : "Member"}</div>
+                    </div>
+
+                    <div className="detail-block">
+                      <div className="detail-label">Department</div>
+                      <div>{selectedMember.department || "Department not added yet"}</div>
+                    </div>
+
+                    <div className="detail-block">
+                      <div className="detail-label">Academic details</div>
+                      <div>{selectedMember.academicDetails || "Academic details not added yet"}</div>
+                    </div>
+
+                    <div className="detail-block">
+                      <div className="detail-label">Bio</div>
+                      <div>{selectedMember.bio || "This member has not added a short bio yet."}</div>
+                    </div>
+
+                    <div className="detail-block">
+                      <div className="detail-label">Research interests</div>
+                      <div className="chip-row">
+                        {(selectedMember.researchInterests || []).map((interest) => (
+                          <div className="chip" key={interest}>{interest}</div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="detail-block">
+                      <div className="detail-label">Skills</div>
+                      <div className="chip-row">
+                        {(selectedMember.skills || []).map((skill) => (
+                          <div className="chip" key={skill}>{skill}</div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {group.currentUserAdmin && !selectedMember.admin && (
+                      <button
+                        className="button-secondary"
+                        type="button"
+                        onClick={() => assignAdmin(selectedMember.userId)}
+                        disabled={busyAction === `assign-admin-${selectedMember.userId}`}
+                      >
+                        {busyAction === `assign-admin-${selectedMember.userId}` ? "Updating..." : "Make admin"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {group.currentUserAdmin && (
