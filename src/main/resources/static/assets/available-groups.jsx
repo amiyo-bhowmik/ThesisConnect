@@ -36,11 +36,19 @@ async function handleApiResponse(response, fallbackMessage) {
   return response.json();
 }
 
-function ThesisGroupsPage() {
+function getInitials(name) {
+  return (name || "?")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function AvailableGroupsPage() {
   const [groups, setGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
   const [groupsError, setGroupsError] = useState("");
-
   useEffect(() => {
     if (!getToken()) {
       window.location.href = "/login.html";
@@ -58,10 +66,7 @@ function ThesisGroupsPage() {
       headers: buildAuthHeaders()
     })
       .then((response) => handleApiResponse(response, "Could not load thesis groups"))
-      .then((data) => {
-        const joinedGroups = data.filter((group) => group.currentUserMember);
-        setGroups(joinedGroups);
-      })
+      .then((data) => setGroups(data))
       .catch((err) => {
         setGroupsError(err.message);
         setGroups([]);
@@ -86,8 +91,8 @@ function ThesisGroupsPage() {
           <div>ThesisConnect</div>
         </div>
         <nav className="nav-links">
+          <a className="button-secondary" href="/groups.html">Thesis groups</a>
           <a className="button-secondary" href="/create-group.html">Create thesis group</a>
-          <a className="button-secondary" href="/available-groups.html">Available groups</a>
           <a className="button-secondary" href="/notifications.html">Notifications</a>
           <a className="button-secondary" href="/home">Homepage</a>
           <a className="button-secondary" href="/discover.html">Discover students</a>
@@ -97,10 +102,9 @@ function ThesisGroupsPage() {
 
       <section className="panel stack">
         <div>
-          <h1 className="page-title" style={{fontSize: "2.8rem"}}>My thesis groups</h1>
+          <h1 className="page-title" style={{fontSize: "2.8rem"}}>Available groups</h1>
           <p className="helper">
-            This page only shows the thesis groups you have already joined. Open a group to review members,
-            see full profile details, and manage requests if you are one of the group admins.
+            Browse thesis groups you have not joined yet, inspect their members, and send join requests or respond to invitations.
           </p>
         </div>
 
@@ -108,19 +112,16 @@ function ThesisGroupsPage() {
 
         <div className="results-column">
           <div className="results-header">
-            <div className="section-title" style={{marginBottom: 0}}>Joined groups</div>
+            <div className="section-title" style={{marginBottom: 0}}>All thesis groups</div>
             <div className="footer-note">
-              {groupsLoading ? "Loading..." : `${groups.length} group${groups.length === 1 ? "" : "s"} joined`}
+              {groupsLoading ? "Loading..." : `${groups.length} group${groups.length === 1 ? "" : "s"} found`}
             </div>
           </div>
 
           {groupsLoading ? (
-            <div className="notice">Loading your thesis groups...</div>
+            <div className="notice">Loading thesis groups...</div>
           ) : groups.length === 0 ? (
-            <div className="notice">
-              You have not joined any thesis groups yet. Use Available groups to browse teams or Create thesis group
-              to start one.
-            </div>
+            <div className="notice">There are no thesis groups to show right now.</div>
           ) : (
             <div className="student-list">
               {groups.map((group) => (
@@ -135,13 +136,24 @@ function ThesisGroupsPage() {
                       <div className="student-name">{group.topic}</div>
                       <div className="muted compact-text">Created by {group.adminName}</div>
                     </div>
-                    <span className={`status-badge ${group.currentUserAdmin ? "status-open" : "status-closed"}`}>
-                      {group.currentUserAdmin ? "Admin" : "Member"}
+                    <span className={`status-badge ${
+                      group.currentUserAdmin || group.currentUserMember || group.currentUserInvitationStatus
+                        ? "status-open"
+                        : "status-closed"
+                    }`}>
+                      {group.currentUserAdmin
+                        ? "Admin"
+                        : group.currentUserMember
+                          ? "Joined"
+                          : group.currentUserInvitationStatus
+                            ? "Invited"
+                            : "Available"}
                     </span>
                   </div>
                   <div className="compact-text muted">{group.description}</div>
                   <div className="chip-row compact-chips">
                     <div className="chip">{group.memberCount} member{group.memberCount === 1 ? "" : "s"}</div>
+                    {group.currentUserJoinRequestStatus && <div className="chip">Join request pending</div>}
                   </div>
                 </button>
               ))}
@@ -153,4 +165,4 @@ function ThesisGroupsPage() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<ThesisGroupsPage />);
+ReactDOM.createRoot(document.getElementById("root")).render(<AvailableGroupsPage />);
