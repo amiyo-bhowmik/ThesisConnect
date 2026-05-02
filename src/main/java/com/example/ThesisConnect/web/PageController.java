@@ -25,9 +25,29 @@ public class PageController {
     public String discover() {
         return "forward:/discover.html";
     }
-    
+
     @GetMapping("/groups")
     public String groups() {
         return "forward:/groups.html";
+    }
+
+    @GetMapping("/create-group")
+    public String createGroup() {
+        return "forward:/create-group.html";
+    }
+
+    @GetMapping("/available-groups")
+    public String availableGroups() {
+        return "forward:/available-groups.html";
+    }
+
+    @GetMapping("/notifications")
+    public String notifications() {
+        return "forward:/notifications.html";
+    }
+
+    @GetMapping("/group-details")
+    public String groupDetails() {
+        return "forward:/group-details.html";
     }
 }
