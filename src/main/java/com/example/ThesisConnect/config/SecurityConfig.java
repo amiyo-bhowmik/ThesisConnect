@@ -40,6 +40,8 @@ public class SecurityConfig {
                                 "/available-groups.html",
                                 "/notifications",
                                 "/notifications.html",
+                                "/messages",
+                                "/messages.html",
                                 "/group-details",
                                 "/group-details.html",
                                 "/profile.html",

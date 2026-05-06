@@ -40,6 +40,7 @@ function HomePage() {
         <nav className="nav-links">
           <a className="button-secondary" href="/profile.html">Edit my profile</a>
           <a className="button-secondary" href="/discover.html">Discover thesis partners</a>
+          <a className="button-secondary" href="/messages.html">Messages</a>
           <a className="button-secondary" href="/groups.html">Thesis groups</a>
           <a className="button-secondary" href="/notifications.html">Notifications</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
@@ -52,6 +53,7 @@ function HomePage() {
           <div className="nav-links" style={{marginTop: "24px"}}>
             <a className="button" href="/profile.html">Edit My Profile</a>
             <a className="button-secondary" href="/discover.html">Discover Thesis Partners</a>
+            <a className="button-secondary" href="/messages.html">Open Messages</a>
             <a className="button-secondary" href="/groups.html">Open Thesis Groups</a>
             <a className="button-secondary" href="/notifications.html">Open Notifications</a>
           </div>
@@ -82,6 +84,7 @@ function HomePage() {
           <div className="nav-links">
             <a className="button-secondary" href="/profile.html">Edit my profile</a>
             <a className="button-secondary" href="/discover.html">Discover thesis partners</a>
+            <a className="button-secondary" href="/messages.html">Open messages</a>
             <a className="button-secondary" href="/groups.html">Open thesis groups</a>
             <a className="button-secondary" href="/notifications.html">Open notifications</a>
           </div>

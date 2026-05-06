@@ -87,6 +87,7 @@ function ThesisGroupsPage() {
         </div>
         <nav className="nav-links">
           <a className="button-secondary" href="/home">Homepage</a>
+          <a className="button-secondary" href="/messages.html">Messages</a>
           <a className="button-secondary" href="/create-group.html">Create thesis group</a>
           <a className="button-secondary" href="/notifications.html">Notifications</a>
           <a className="button-secondary" href="/available-groups.html">Available groups</a>
