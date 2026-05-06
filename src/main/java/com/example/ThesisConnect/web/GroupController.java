@@ -1,13 +1,7 @@
 package com.example.ThesisConnect.web;
 
-import com.example.ThesisConnect.dto.AddDocumentCommentRequest;
-import com.example.ThesisConnect.dto.CreateGroupRequest;
-import com.example.ThesisConnect.dto.InviteMemberRequest;
-import com.example.ThesisConnect.dto.NotificationResponse;
-import com.example.ThesisConnect.dto.ThesisGroupResponse;
-import com.example.ThesisConnect.dto.ThesisGroupSummaryResponse;
-import com.example.ThesisConnect.service.GroupService;
-import jakarta.validation.Valid;
+import java.util.List;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -18,12 +12,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import com.example.ThesisConnect.dto.AddDocumentCommentRequest;
+import com.example.ThesisConnect.dto.CreateGroupRequest;
+import com.example.ThesisConnect.dto.InviteMemberRequest;
+import com.example.ThesisConnect.dto.NotificationResponse;
+import com.example.ThesisConnect.dto.ThesisGroupResponse;
+import com.example.ThesisConnect.dto.ThesisGroupSummaryResponse;
+import com.example.ThesisConnect.service.GroupService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -115,6 +117,16 @@ public class GroupController {
         return groupService.uploadDocumentVersion(authentication.getName(), groupId, documentId, file);
     }
 
+    @PostMapping("/{groupId}/documents/{documentId}/comments")
+    public ThesisGroupResponse addDocumentComment(
+            Authentication authentication,
+            @PathVariable Long groupId,
+            @PathVariable Long documentId,
+            @Valid @RequestBody AddDocumentCommentRequest request
+    ) {
+        return groupService.addDocumentComment(authentication.getName(), groupId, documentId, request);
+    }
+
     @GetMapping("/{groupId}/documents/{documentId}/download")
     public ResponseEntity<Resource> downloadDocument(
             Authentication authentication,
@@ -136,7 +148,7 @@ public class GroupController {
                 )
                 .body(download.resource());
     }
-    
+
     @GetMapping("/notifications")
     public List<NotificationResponse> listNotifications(Authentication authentication) {
         return groupService.listNotifications(authentication.getName());
