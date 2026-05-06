@@ -86,6 +86,9 @@ function GroupDetailsPage() {
   const [documentFile, setDocumentFile] = useState(null);
   const [commentDraft, setCommentDraft] = useState("");
   const [versionFile, setVersionFile] = useState(null);
+  const [groupMessages, setGroupMessages] = useState([]);
+  const [discussionLoading, setDiscussionLoading] = useState(false);
+  const [discussionDraft, setDiscussionDraft] = useState("");
 
   const params = new URLSearchParams(window.location.search);
   const groupId = params.get("groupId");
@@ -124,6 +127,15 @@ function GroupDetailsPage() {
     }
   }, [group, selectedDocumentId]);
 
+  useEffect(() => {
+    if (!group || !group.currentUserMember) {
+      setGroupMessages([]);
+      return;
+    }
+
+    loadGroupMessages(group.groupId);
+  }, [group && group.groupId, group && group.currentUserMember]);
+
   function loadGroup() {
     setGroupLoading(true);
     setGroupError("");
@@ -146,6 +158,18 @@ function GroupDetailsPage() {
       .then((data) => setStudents(data))
       .catch(() => setStudents([]))
       .finally(() => setStudentsLoading(false));
+  }
+
+  function loadGroupMessages(currentGroupId) {
+    setDiscussionLoading(true);
+
+    fetch(`/api/messages/groups/${currentGroupId}`, {
+      headers: buildAuthHeaders()
+    })
+      .then((response) => handleApiResponse(response, "Could not load group discussion"))
+      .then((data) => setGroupMessages(data))
+      .catch((err) => setError(err.message))
+      .finally(() => setDiscussionLoading(false));
   }
 
   function runGroupAction(actionKey, requestFactory, successMessage) {
@@ -315,6 +339,56 @@ function GroupDetailsPage() {
     setCommentDraft("");
   }
 
+  function postGroupMessage(event) {
+    event.preventDefault();
+    if (!group || !discussionDraft.trim()) {
+      return;
+    }
+
+    setBusyAction(`discussion-${group.groupId}`);
+    setStatus("");
+    setError("");
+
+    fetch(`/api/messages/groups/${group.groupId}`, {
+      method: "POST",
+      headers: buildAuthHeaders({
+        "Content-Type": "application/json"
+      }),
+      body: JSON.stringify({ content: discussionDraft.trim() })
+    })
+      .then((response) => handleApiResponse(response, "Could not send group message"))
+      .then((data) => {
+        setGroupMessages(data);
+        setDiscussionDraft("");
+        setStatus("Group discussion updated.");
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setBusyAction(""));
+  }
+
+  function toggleGroupMessagePin(message) {
+    if (!group) {
+      return;
+    }
+
+    const action = message.pinned ? "unpin" : "pin";
+    setBusyAction(`${action}-discussion-${message.messageId}`);
+    setStatus("");
+    setError("");
+
+    fetch(`/api/messages/groups/${group.groupId}/${message.messageId}/${action}`, {
+      method: "POST",
+      headers: buildAuthHeaders()
+    })
+      .then((response) => handleApiResponse(response, `Could not ${action} message`))
+      .then((data) => {
+        setGroupMessages(data);
+        setStatus(message.pinned ? "Message unpinned." : "Message pinned.");
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setBusyAction(""));
+  }
+
   async function downloadDocument(documentId, version) {
     if (!group) {
       return;
@@ -394,6 +468,7 @@ function GroupDetailsPage() {
 
   const documents = group ? (group.documents || []) : [];
   const selectedDocument = documents.find((document) => document.documentId === selectedDocumentId) || null;
+  const pinnedGroupMessages = groupMessages.filter((message) => message.pinned);
 
   return (
     <div className="page-shell">
@@ -404,6 +479,7 @@ function GroupDetailsPage() {
         </div>
         <nav className="nav-links">
           <a className="button-secondary" href="/groups.html">Thesis groups</a>
+          <a className="button-secondary" href="/messages.html">Messages</a>
           <a className="button-secondary" href="/home">Homepage</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
         </nav>
@@ -478,6 +554,83 @@ function GroupDetailsPage() {
                   </button>
                 </div>
               </div>
+            )}
+
+            {group.currentUserMember && (
+              <section className="panel stack">
+                <div className="section-title">Group discussion</div>
+
+                {pinnedGroupMessages.length > 0 && (
+                  <div className="stack">
+                    {pinnedGroupMessages.map((message) => (
+                      <div className="pinned-banner" key={`group-pin-${message.messageId}`}>
+                        <div>
+                          <strong>{message.authoredByCurrentUser ? "You" : message.sender.name}</strong>
+                          <div className="compact-text">{message.content}</div>
+                        </div>
+                        <button
+                          className="button-secondary"
+                          type="button"
+                          onClick={() => toggleGroupMessagePin(message)}
+                          disabled={busyAction === `unpin-discussion-${message.messageId}`}
+                        >
+                          {busyAction === `unpin-discussion-${message.messageId}` ? "Working..." : "Unpin"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {discussionLoading ? (
+                  <div className="notice">Loading group discussion...</div>
+                ) : (
+                  <div className="message-list">
+                    {groupMessages.length === 0 ? (
+                      <div className="notice">No discussion messages yet. Start the conversation with your group.</div>
+                    ) : (
+                      groupMessages.map((message) => (
+                        <article
+                          className={`message-bubble ${message.authoredByCurrentUser ? "message-bubble-own" : ""}`}
+                          key={message.messageId}
+                        >
+                          <div className="message-toolbar">
+                            <strong>{message.authoredByCurrentUser ? "You" : message.sender.name}</strong>
+                            <button
+                              className="button-secondary"
+                              type="button"
+                              onClick={() => toggleGroupMessagePin(message)}
+                              disabled={busyAction === `${message.pinned ? "unpin" : "pin"}-discussion-${message.messageId}`}
+                            >
+                              {message.pinned ? "Unpin" : "Pin"}
+                            </button>
+                          </div>
+                          <p className="compact-text">{message.content}</p>
+                          <div className="footer-note">{formatDateTime(message.timestamp)}</div>
+                        </article>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                <form className="auth-form" onSubmit={postGroupMessage}>
+                  <label className="field">
+                    <span>Post to the group</span>
+                    <textarea
+                      value={discussionDraft}
+                      onChange={(event) => setDiscussionDraft(event.target.value)}
+                      placeholder="Share updates, ideas, or questions with your thesis group"
+                      maxLength={1200}
+                    />
+                  </label>
+                  <button
+                    className="button"
+                    type="submit"
+                    disabled={!discussionDraft.trim() || busyAction === `discussion-${group.groupId}`}
+                  >
+                    {busyAction === `discussion-${group.groupId}` ? "Posting..." : "Post message"}
+                  </button>
+                </form>
+              </section>
             )}
 
             <div className="section-title">Thesis documents and collaboration</div>
@@ -802,16 +955,24 @@ function GroupDetailsPage() {
                       </div>
                     </div>
 
-                    {group.currentUserAdmin && !selectedMember.admin && (
-                      <button
+                    <div className="nav-links">
+                      <a
                         className="button-secondary"
-                        type="button"
-                        onClick={() => assignAdmin(selectedMember.userId)}
-                        disabled={busyAction === `assign-admin-${selectedMember.userId}`}
+                        href={`/messages.html?studentId=${encodeURIComponent(selectedMember.userId)}`}
                       >
-                        {busyAction === `assign-admin-${selectedMember.userId}` ? "Updating..." : "Make admin"}
-                      </button>
-                    )}
+                        Send direct message
+                      </a>
+                      {group.currentUserAdmin && !selectedMember.admin && (
+                        <button
+                          className="button-secondary"
+                          type="button"
+                          onClick={() => assignAdmin(selectedMember.userId)}
+                          disabled={busyAction === `assign-admin-${selectedMember.userId}`}
+                        >
+                          {busyAction === `assign-admin-${selectedMember.userId}` ? "Updating..." : "Make admin"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

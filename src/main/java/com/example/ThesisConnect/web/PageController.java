@@ -46,6 +46,11 @@ public class PageController {
         return "forward:/notifications.html";
     }
 
+    @GetMapping("/messages")
+    public String messages() {
+        return "forward:/messages.html";
+    }
+
     @GetMapping("/group-details")
     public String groupDetails() {
         return "forward:/group-details.html";

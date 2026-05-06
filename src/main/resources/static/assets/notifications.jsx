@@ -77,6 +77,7 @@ function NotificationsPage() {
           <div>ThesisConnect</div>
         </div>
         <nav className="nav-links">
+          <a className="button-secondary" href="/messages.html">Messages</a>
           <a className="button-secondary" href="/groups.html">Thesis groups</a>
           <a className="button-secondary" href="/home">Homepage</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
@@ -87,7 +88,7 @@ function NotificationsPage() {
         <div>
           <h1 className="page-title" style={{fontSize: "2.8rem"}}>Notifications</h1>
           <p className="helper">
-            Review invitations, join request outcomes, group creation updates, and admin activity from one place.
+            Review invitations, direct message alerts, document feedback, and group activity from one place.
           </p>
         </div>
 
