@@ -75,12 +75,14 @@ select {
     display: flex;
     gap: 14px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .link-pill,
 .button,
 .button-secondary,
-.button-danger {
+.button-danger,
+.button-neutral {
     border-radius: 999px;
     padding: 12px 18px;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
@@ -89,7 +91,8 @@ select {
 .link-pill:hover,
 .button:hover,
 .button-secondary:hover,
-.button-danger:hover {
+.button-danger:hover,
+.button-neutral:hover {
     transform: translateY(-1px);
 }
 
@@ -107,6 +110,19 @@ select {
     background: rgba(255, 255, 255, 0.72);
 }
 
+.button-neutral {
+    border: 1px solid rgba(23, 33, 50, 0.16);
+    cursor: pointer;
+    color: var(--ink);
+    background: rgba(23, 33, 50, 0.08);
+    box-shadow: 0 10px 24px rgba(23, 33, 50, 0.08);
+}
+
+.button-neutral:hover {
+    background: rgba(23, 33, 50, 0.18);
+    box-shadow: 0 14px 28px rgba(23, 33, 50, 0.14);
+}
+
 .button-danger {
     border: 0;
     cursor: pointer;
@@ -116,6 +132,7 @@ select {
 }
 
 .button:disabled,
+.button-neutral:disabled,
 .button-secondary:disabled,
 .button-danger:disabled {
     cursor: not-allowed;
@@ -512,6 +529,26 @@ select {
 .status-closed {
     background: rgba(90, 100, 120, 0.14);
     color: #4e5a71;
+}
+
+.nav-notification-link {
+    position: relative;
+}
+
+.nav-notification-dot {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #c93030;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
+}
+
+.notification-card-unread {
+    border-color: rgba(212, 98, 58, 0.32);
+    background: rgba(255, 248, 243, 0.94);
 }
 
 @media (max-width: 920px) {

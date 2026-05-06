@@ -99,12 +99,12 @@ function LoginPage() {
             <div className="brand-badge">TC</div>
             <div>ThesisConnect</div>
           </div>
-          <h1 className="page-title" style={{marginTop: "28px"}}>Create your account or sign in with JWT access.</h1>
+          <h1 className="page-title" style={{marginTop: "28px"}}>Collaborate on your thesis with the right research partners.</h1>
           <p className="helper">
-            Register with your own email and password, then manage your ThesisConnect profile through token-based authentication.
+            Build your profile, discover students with similar academic interests, and organize your thesis work through shared groups and communication.
           </p>
           <div className="footer-note">
-            Your token is stored in the browser and sent with profile API requests.
+            ThesisConnect helps research students connect, coordinate, and move their work forward together.
           </div>
         </section>
 
@@ -141,8 +141,8 @@ function LoginPage() {
           <h2>{mode === "register" ? "Create account" : "Welcome back"}</h2>
           <p className="muted">
             {mode === "register"
-              ? "Start with your name, email, and password. You can complete the rest of your profile afterward."
-              : "Sign in to manage your profile, academic details, bio, and profile picture."}
+              ? "Create your account to start building your research profile and connecting with thesis collaborators."
+              : "Sign in to continue managing your profile, groups, messages, and thesis collaboration."}
           </p>
           {error && <div className="error">{error}</div>}
           {status && <div className="success">{status}</div>}
@@ -211,13 +211,10 @@ function LoginPage() {
               {submitting
                 ? "Please wait..."
                 : mode === "register"
-                  ? "Register and continue"
-                  : "Login to ThesisConnect"}
+                  ? "Create account and continue"
+                  : "Sign in to ThesisConnect"}
             </button>
           </form>
-          <div className="footer-note">
-            <a href="/home">Go to homepage</a>
-          </div>
         </section>
       </div>
     </div>

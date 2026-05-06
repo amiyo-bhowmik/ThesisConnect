@@ -96,6 +96,15 @@ public class GroupController {
         return groupService.assignAdmin(authentication.getName(), groupId, userId);
     }
 
+    @PostMapping("/{groupId}/members/{userId}/admins/remove")
+    public ThesisGroupResponse removeAdmin(
+            Authentication authentication,
+            @PathVariable Long groupId,
+            @PathVariable Long userId
+    ) {
+        return groupService.removeAdmin(authentication.getName(), groupId, userId);
+    }
+
     @PostMapping(path = "/{groupId}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ThesisGroupResponse uploadDocument(
             Authentication authentication,
@@ -152,5 +161,15 @@ public class GroupController {
     @GetMapping("/notifications")
     public List<NotificationResponse> listNotifications(Authentication authentication) {
         return groupService.listNotifications(authentication.getName());
+    }
+
+    @GetMapping("/notifications/unread")
+    public boolean hasUnreadNotifications(Authentication authentication) {
+        return groupService.hasUnreadNotifications(authentication.getName());
+    }
+
+    @PostMapping("/notifications/read")
+    public void markNotificationsAsRead(Authentication authentication) {
+        groupService.markNotificationsAsRead(authentication.getName());
     }
 }

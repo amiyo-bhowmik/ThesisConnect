@@ -297,6 +297,30 @@ public class GroupRepository {
         );
     }
 
+    public boolean hasUnreadNotifications(Long userId) {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM notifications
+                WHERE user_id = ? AND is_read = FALSE
+                """,
+                Integer.class,
+                userId
+        );
+        return count != null && count > 0;
+    }
+
+    public void markNotificationsAsRead(Long userId) {
+        jdbcTemplate.update(
+                """
+                UPDATE notifications
+                SET is_read = TRUE
+                WHERE user_id = ? AND is_read = FALSE
+                """,
+                userId
+        );
+    }
+
     public long createJoinRequest(
             Long senderUserId,
             Long recipientUserId,

@@ -70,6 +70,7 @@ function formatFileSize(bytes) {
 }
 
 function GroupDetailsPage() {
+  const FLASH_STATUS_KEY = "group-details-status";
   const [group, setGroup] = useState(null);
   const [groupLoading, setGroupLoading] = useState(true);
   const [groupError, setGroupError] = useState("");
@@ -89,9 +90,11 @@ function GroupDetailsPage() {
   const [groupMessages, setGroupMessages] = useState([]);
   const [discussionLoading, setDiscussionLoading] = useState(false);
   const [discussionDraft, setDiscussionDraft] = useState("");
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
   const params = new URLSearchParams(window.location.search);
   const groupId = params.get("groupId");
+  const selectedMemberId = params.get("memberId");
 
   useEffect(() => {
     if (!getToken()) {
@@ -107,7 +110,39 @@ function GroupDetailsPage() {
 
     loadGroup();
     loadStudents();
+
+    fetch("/api/groups/notifications/unread", {
+      headers: buildAuthHeaders()
+    })
+      .then((response) => handleApiResponse(response, "Could not load unread notification status"))
+      .then((data) => setHasUnreadNotifications(!!data))
+      .catch(() => setHasUnreadNotifications(false));
+
+    const flashStatus = window.sessionStorage.getItem(FLASH_STATUS_KEY);
+    if (flashStatus) {
+      setStatus(flashStatus);
+      window.sessionStorage.removeItem(FLASH_STATUS_KEY);
+    }
   }, [groupId]);
+
+  useEffect(() => {
+    if (!group) {
+      return;
+    }
+
+    if (!selectedMemberId) {
+      setSelectedMember((current) => {
+        if (!current) {
+          return null;
+        }
+        return group.members.find((member) => member.userId === current.userId) || null;
+      });
+      return;
+    }
+
+    const matchedMember = group.members.find((member) => String(member.userId) === selectedMemberId);
+    setSelectedMember(matchedMember || null);
+  }, [group, selectedMemberId]);
 
   useEffect(() => {
     if (!group) {
@@ -193,6 +228,34 @@ function GroupDetailsPage() {
       .finally(() => setBusyAction(""));
   }
 
+  function buildCurrentGroupUrl(memberId) {
+    const nextParams = new URLSearchParams();
+    nextParams.set("groupId", groupId);
+    if (memberId) {
+      nextParams.set("memberId", memberId);
+    }
+    return `${window.location.pathname}?${nextParams.toString()}`;
+  }
+
+  function selectMember(member) {
+    setSelectedMember(member);
+    window.history.replaceState({}, "", buildCurrentGroupUrl(member.userId));
+  }
+
+  function runGroupActionWithReload(actionKey, requestFactory, successMessage, memberId) {
+    setBusyAction(actionKey);
+    setStatus("");
+    setError("");
+
+    requestFactory()
+      .then(() => {
+        window.sessionStorage.setItem(FLASH_STATUS_KEY, successMessage);
+        window.location.href = buildCurrentGroupUrl(memberId);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setBusyAction(""));
+  }
+
   function sendJoinRequest() {
     if (!group) {
       return;
@@ -252,14 +315,32 @@ function GroupDetailsPage() {
       return;
     }
 
-    runGroupAction(
+    runGroupActionWithReload(
       `assign-admin-${userId}`,
       () =>
         fetch(`/api/groups/${group.groupId}/members/${userId}/admins`, {
           method: "POST",
           headers: buildAuthHeaders()
         }).then((response) => handleApiResponse(response, "Could not assign admin")),
-      "Group admin updated."
+      "Group admin updated.",
+      String(userId)
+    );
+  }
+
+  function removeAdmin(userId) {
+    if (!group) {
+      return;
+    }
+
+    runGroupActionWithReload(
+      `remove-admin-${userId}`,
+      () =>
+        fetch(`/api/groups/${group.groupId}/members/${userId}/admins/remove`, {
+          method: "POST",
+          headers: buildAuthHeaders()
+        }).then((response) => handleApiResponse(response, "Could not remove admin status")),
+      "Admin status removed.",
+      String(userId)
     );
   }
 
@@ -479,7 +560,11 @@ function GroupDetailsPage() {
         </div>
         <nav className="nav-links">
           <a className="button-secondary" href="/groups.html">Thesis groups</a>
-          <a className="button-secondary" href="/messages.html">Messages</a>
+          <a className="button-secondary" href="/messages.html">Inbox</a>
+          <a className="button-secondary nav-notification-link" href="/notifications.html">
+            Notifications
+            {hasUnreadNotifications && <span className="nav-notification-dot" aria-label="Unread notifications" />}
+          </a>
           <a className="button-secondary" href="/home">Homepage</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
         </nav>
@@ -870,7 +955,7 @@ function GroupDetailsPage() {
                     <article
                       className={`panel member-card ${selectedMember && selectedMember.userId === member.userId ? "student-card-active" : ""}`}
                       key={member.userId}
-                      onClick={() => setSelectedMember(member)}
+                      onClick={() => selectMember(member)}
                       style={{ cursor: "pointer" }}
                     >
                       <div className="student-identity">
@@ -957,19 +1042,29 @@ function GroupDetailsPage() {
 
                     <div className="nav-links">
                       <a
-                        className="button-secondary"
+                        className="button-neutral"
                         href={`/messages.html?studentId=${encodeURIComponent(selectedMember.userId)}`}
                       >
                         Send direct message
                       </a>
                       {group.currentUserAdmin && !selectedMember.admin && (
                         <button
-                          className="button-secondary"
+                          className="button-neutral"
                           type="button"
                           onClick={() => assignAdmin(selectedMember.userId)}
                           disabled={busyAction === `assign-admin-${selectedMember.userId}`}
                         >
                           {busyAction === `assign-admin-${selectedMember.userId}` ? "Updating..." : "Make admin"}
+                        </button>
+                      )}
+                      {group.currentUserCreator && selectedMember.admin && selectedMember.userId !== group.admin.userId && (
+                        <button
+                          className="button-neutral"
+                          type="button"
+                          onClick={() => removeAdmin(selectedMember.userId)}
+                          disabled={busyAction === `remove-admin-${selectedMember.userId}`}
+                        >
+                          {busyAction === `remove-admin-${selectedMember.userId}` ? "Updating..." : "Remove admin"}
                         </button>
                       )}
                     </div>
