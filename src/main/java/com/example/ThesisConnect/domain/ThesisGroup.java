@@ -15,7 +15,7 @@ public class ThesisGroup {
 
     private List<User> members = new ArrayList<>();
 
-    private List<String> documents = new ArrayList<>();
+    private List<Document> documents = new ArrayList<>();
 
     public Long getGroupId() {
         return groupId;
@@ -57,11 +57,11 @@ public class ThesisGroup {
         this.members = members == null ? new ArrayList<>() : new ArrayList<>(members);
     }
 
-    public List<String> getDocuments() {
+    public List<Document> getDocuments() {
         return documents;
     }
 
-    public void setDocuments(List<String> documents) {
+    public void setDocuments(List<Document> documents) {
         this.documents = documents == null ? new ArrayList<>() : new ArrayList<>(documents);
     }
 }

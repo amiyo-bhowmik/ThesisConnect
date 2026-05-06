@@ -8,7 +8,7 @@ public record ThesisGroupResponse(
         String description,
         ProfileResponse admin,
         List<GroupMemberResponse> members,
-        List<String> documents,
+        List<DocumentResponse> documents,
         List<JoinRequestResponse> pendingJoinRequests,
         List<JoinRequestResponse> pendingInvitations,
         boolean currentUserMember,
