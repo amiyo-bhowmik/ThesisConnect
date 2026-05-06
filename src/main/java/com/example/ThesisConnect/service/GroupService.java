@@ -118,6 +118,7 @@ public class GroupService {
         ThesisGroup thesisGroup = mapGroup(groupRow);
         boolean currentUserMember = groupRepository.isMember(groupId, currentUser.getUserId());
         boolean currentUserAdmin = groupRepository.isAdmin(groupId, currentUser.getUserId());
+        boolean currentUserCreator = groupRow.adminUserId().equals(currentUser.getUserId());
         String currentUserJoinRequestStatus = groupRepository.findPendingJoinRequest(currentUser.getUserId(), groupId)
                 .map(request -> request.status().name())
                 .orElse(null);
@@ -157,6 +158,7 @@ public class GroupService {
                 pendingInvitations,
                 currentUserMember,
                 currentUserAdmin,
+                currentUserCreator,
                 currentUserJoinRequestStatus,
                 currentUserInvitationStatus
         );
@@ -279,6 +281,36 @@ public class GroupService {
         groupRepository.createNotification(
                 targetUser.getUserId(),
                 "You were assigned as an admin of a thesis group."
+        );
+        return getGroup(currentUserEmail, groupId);
+    }
+
+    @Transactional
+    public ThesisGroupResponse removeAdmin(String currentUserEmail, Long groupId, Long targetUserId) {
+        User currentUser = findByEmail(currentUserEmail);
+        User targetUser = findById(targetUserId);
+        GroupRepository.GroupRow groupRow = findGroupRow(groupId);
+
+        if (!groupRow.adminUserId().equals(currentUser.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can remove admin status");
+        }
+
+        if (!groupRepository.isMember(groupId, targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only group members can have admin status updated");
+        }
+
+        if (!groupRepository.isAdmin(groupId, targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This member is not currently an admin");
+        }
+
+        if (groupRow.adminUserId().equals(targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The group creator cannot lose admin status");
+        }
+
+        groupRepository.setAdmin(groupId, targetUserId, false);
+        groupRepository.createNotification(
+                targetUser.getUserId(),
+                "Your admin access was removed from a thesis group."
         );
         return getGroup(currentUserEmail, groupId);
     }
@@ -425,6 +457,17 @@ public class GroupService {
         return groupRepository.findNotificationsByUserId(currentUser.getUserId()).stream()
                 .map(this::mapNotification)
                 .toList();
+    }
+
+    public boolean hasUnreadNotifications(String currentUserEmail) {
+        User currentUser = findByEmail(currentUserEmail);
+        return groupRepository.hasUnreadNotifications(currentUser.getUserId());
+    }
+
+    @Transactional
+    public void markNotificationsAsRead(String currentUserEmail) {
+        User currentUser = findByEmail(currentUserEmail);
+        groupRepository.markNotificationsAsRead(currentUser.getUserId());
     }
 
     private GroupRepository.GroupRow findGroupRow(Long groupId) {

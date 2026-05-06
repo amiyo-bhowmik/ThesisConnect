@@ -84,6 +84,7 @@ function DiscoverPage() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedStudentLoading, setSelectedStudentLoading] = useState(false);
   const [selectedStudentError, setSelectedStudentError] = useState("");
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
   const [directoryFilters, setDirectoryFilters] = useState({
     name: "",
     email: "",
@@ -100,6 +101,13 @@ function DiscoverPage() {
     }
 
     loadStudents(directoryFilters);
+
+    fetch("/api/groups/notifications/unread", {
+      headers: buildAuthHeaders()
+    })
+      .then((response) => handleApiResponse(response, "Could not load unread notification status"))
+      .then((data) => setHasUnreadNotifications(!!data))
+      .catch(() => setHasUnreadNotifications(false));
   }, []);
 
   function loadStudents(filters) {
@@ -189,8 +197,12 @@ function DiscoverPage() {
           <div>ThesisConnect</div>
         </div>
         <nav className="nav-links">
-          <a className="button-secondary" href="/messages.html">Messages</a>
+          <a className="button-secondary" href="/messages.html">Inbox</a>
           <a className="button-secondary" href="/groups.html">Thesis groups</a>
+          <a className="button-secondary nav-notification-link" href="/notifications.html">
+            Notifications
+            {hasUnreadNotifications && <span className="nav-notification-dot" aria-label="Unread notifications" />}
+          </a>
           <a className="button-secondary" href="/home">Homepage</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
         </nav>

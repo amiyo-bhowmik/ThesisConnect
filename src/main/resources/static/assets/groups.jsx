@@ -40,6 +40,7 @@ function ThesisGroupsPage() {
   const [groups, setGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
   const [groupsError, setGroupsError] = useState("");
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -48,6 +49,13 @@ function ThesisGroupsPage() {
     }
 
     loadGroups();
+
+    fetch("/api/groups/notifications/unread", {
+      headers: buildAuthHeaders()
+    })
+      .then((response) => handleApiResponse(response, "Could not load unread notification status"))
+      .then((data) => setHasUnreadNotifications(!!data))
+      .catch(() => setHasUnreadNotifications(false));
   }, []);
 
   function loadGroups(preferredGroupId) {
@@ -86,11 +94,14 @@ function ThesisGroupsPage() {
           <div>ThesisConnect</div>
         </div>
         <nav className="nav-links">
-          <a className="button-secondary" href="/home">Homepage</a>
-          <a className="button-secondary" href="/messages.html">Messages</a>
+          <a className="button-secondary" href="/messages.html">Inbox</a>
           <a className="button-secondary" href="/create-group.html">Create thesis group</a>
-          <a className="button-secondary" href="/notifications.html">Notifications</a>
+          <a className="button-secondary nav-notification-link" href="/notifications.html">
+            Notifications
+            {hasUnreadNotifications && <span className="nav-notification-dot" aria-label="Unread notifications" />}
+          </a>
           <a className="button-secondary" href="/available-groups.html">Available groups</a>
+          <a className="button-secondary" href="/home">Homepage</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
         </nav>
       </header>

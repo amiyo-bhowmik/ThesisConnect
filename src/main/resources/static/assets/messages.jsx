@@ -64,6 +64,7 @@ function MessagesPage() {
   const [error, setError] = useState("");
   const [busyAction, setBusyAction] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
   const preferredStudentId = new URLSearchParams(window.location.search).get("studentId");
 
@@ -74,6 +75,13 @@ function MessagesPage() {
     }
 
     loadStudents();
+
+    fetch("/api/groups/notifications/unread", {
+      headers: buildAuthHeaders()
+    })
+      .then((response) => handleApiResponse(response, "Could not load unread notification status"))
+      .then((data) => setHasUnreadNotifications(!!data))
+      .catch(() => setHasUnreadNotifications(false));
   }, []);
 
   function loadStudents() {
@@ -205,7 +213,10 @@ function MessagesPage() {
         <nav className="nav-links">
           <a className="button-secondary" href="/discover.html">Discover students</a>
           <a className="button-secondary" href="/groups.html">Thesis groups</a>
-          <a className="button-secondary" href="/notifications.html">Notifications</a>
+          <a className="button-secondary nav-notification-link" href="/notifications.html">
+            Notifications
+            {hasUnreadNotifications && <span className="nav-notification-dot" aria-label="Unread notifications" />}
+          </a>
           <a className="button-secondary" href="/home">Homepage</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
         </nav>

@@ -13,6 +13,7 @@ public record ThesisGroupResponse(
         List<JoinRequestResponse> pendingInvitations,
         boolean currentUserMember,
         boolean currentUserAdmin,
+        boolean currentUserCreator,
         String currentUserJoinRequestStatus,
         String currentUserInvitationStatus
 ) {

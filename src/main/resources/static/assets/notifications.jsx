@@ -48,6 +48,7 @@ function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [hadUnreadOnLoad, setHadUnreadOnLoad] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -59,7 +60,17 @@ function NotificationsPage() {
       headers: buildAuthHeaders()
     })
       .then((response) => handleApiResponse(response, "Could not load notifications"))
-      .then((data) => setNotifications(data))
+      .then((data) => {
+        setNotifications(data);
+        const hasUnread = data.some((notification) => !notification.read);
+        setHadUnreadOnLoad(hasUnread);
+        if (hasUnread) {
+          fetch("/api/groups/notifications/read", {
+            method: "POST",
+            headers: buildAuthHeaders()
+          }).catch(() => null);
+        }
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -77,7 +88,7 @@ function NotificationsPage() {
           <div>ThesisConnect</div>
         </div>
         <nav className="nav-links">
-          <a className="button-secondary" href="/messages.html">Messages</a>
+          <a className="button-secondary" href="/messages.html">Inbox</a>
           <a className="button-secondary" href="/groups.html">Thesis groups</a>
           <a className="button-secondary" href="/home">Homepage</a>
           <button className="button" type="button" onClick={logout}>Logout</button>
@@ -101,7 +112,10 @@ function NotificationsPage() {
         ) : (
           <div className="stack">
             {notifications.map((notification) => (
-              <div className="notification-card panel" key={notification.notificationId}>
+              <div
+                className={`notification-card panel ${hadUnreadOnLoad && !notification.read ? "notification-card-unread" : ""}`}
+                key={notification.notificationId}
+              >
                 <div>{notification.message}</div>
                 <div className="footer-note">{formatTimestamp(notification.timestamp)}</div>
               </div>
