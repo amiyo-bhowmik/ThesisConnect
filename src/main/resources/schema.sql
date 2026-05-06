@@ -56,8 +56,8 @@ CREATE TABLE IF NOT EXISTS join_requests (
     group_id BIGINT NOT NULL,
     status VARCHAR(20) NOT NULL,
     request_type VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMP,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resolved_at DATETIME NULL,
     reviewed_by_user_id BIGINT,
     CONSTRAINT fk_join_requests_sender
         FOREIGN KEY (sender_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
@@ -73,8 +73,56 @@ CREATE TABLE IF NOT EXISTS notifications (
     notification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     message VARCHAR(400) NOT NULL,
-    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT fk_notifications_user
         FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS documents (
+    document_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    original_file_name VARCHAR(255) NOT NULL,
+    visibility VARCHAR(20) NOT NULL,
+    uploaded_by_user_id BIGINT NOT NULL,
+    group_id BIGINT NOT NULL,
+    upload_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version INT NOT NULL DEFAULT 1,
+    file_size BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT fk_documents_uploaded_by
+        FOREIGN KEY (uploaded_by_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_documents_group
+        FOREIGN KEY (group_id) REFERENCES thesis_groups(group_id) ON DELETE CASCADE,
+    CONSTRAINT chk_documents_visibility
+        CHECK (visibility IN ('PUBLIC', 'PRIVATE'))
+);
+
+CREATE TABLE IF NOT EXISTS document_versions (
+    version_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    document_id BIGINT NOT NULL,
+    version_number INT NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    original_file_name VARCHAR(255) NOT NULL,
+    file_size BIGINT NOT NULL DEFAULT 0,
+    uploaded_by_user_id BIGINT NOT NULL,
+    uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_document_versions_document
+        FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
+    CONSTRAINT fk_document_versions_uploaded_by
+        FOREIGN KEY (uploaded_by_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT uk_document_versions_number
+        UNIQUE (document_id, version_number)
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+    comment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    content VARCHAR(1200) NOT NULL,
+    author_user_id BIGINT NOT NULL,
+    document_id BIGINT NOT NULL,
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_comments_author
+        FOREIGN KEY (author_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_comments_document
+        FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE
 );
