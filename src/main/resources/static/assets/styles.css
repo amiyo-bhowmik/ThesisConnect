@@ -383,6 +383,41 @@ select {
     border: 1px solid var(--line);
 }
 
+.message-list {
+    display: grid;
+    gap: 14px;
+    max-height: 460px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.message-bubble {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 16px 18px;
+    background: rgba(255, 255, 255, 0.86);
+}
+
+.message-bubble-own {
+    background: rgba(212, 98, 58, 0.10);
+    border-color: rgba(212, 98, 58, 0.22);
+}
+
+.message-toolbar,
+.pinned-banner {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.pinned-banner {
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(26, 127, 114, 0.24);
+    background: rgba(26, 127, 114, 0.08);
+}
+
 .document-meta-card p {
     margin: 10px 0 0;
     line-height: 1.55;
@@ -499,7 +534,9 @@ select {
     .student-card-head,
     .student-identity,
     .group-header,
-    .group-card-head {
+    .group-card-head,
+    .message-toolbar,
+    .pinned-banner {
         align-items: flex-start;
         flex-direction: column;
     }
