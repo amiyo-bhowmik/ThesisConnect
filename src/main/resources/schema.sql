@@ -126,3 +126,49 @@ CREATE TABLE IF NOT EXISTS comments (
     CONSTRAINT fk_comments_document
         FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS direct_messages (
+    message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sender_user_id BIGINT NOT NULL,
+    receiver_user_id BIGINT NOT NULL,
+    content VARCHAR(1200) NOT NULL,
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_direct_messages_sender
+        FOREIGN KEY (sender_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_direct_messages_receiver
+        FOREIGN KEY (receiver_user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS group_messages (
+    message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sender_user_id BIGINT NOT NULL,
+    group_id BIGINT NOT NULL,
+    content VARCHAR(1200) NOT NULL,
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_group_messages_sender
+        FOREIGN KEY (sender_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_group_messages_group
+        FOREIGN KEY (group_id) REFERENCES thesis_groups(group_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS direct_message_pins (
+    user_id BIGINT NOT NULL,
+    message_id BIGINT NOT NULL,
+    pinned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, message_id),
+    CONSTRAINT fk_direct_message_pins_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_direct_message_pins_message
+        FOREIGN KEY (message_id) REFERENCES direct_messages(message_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS group_message_pins (
+    user_id BIGINT NOT NULL,
+    message_id BIGINT NOT NULL,
+    pinned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, message_id),
+    CONSTRAINT fk_group_message_pins_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_group_message_pins_message
+        FOREIGN KEY (message_id) REFERENCES group_messages(message_id) ON DELETE CASCADE
+);
