@@ -377,6 +377,12 @@ public class GroupService {
         }
 
         documentRepository.createComment(content, currentUser.getUserId(), documentId);
+        if (!documentRow.uploadedByUserId().equals(currentUser.getUserId())) {
+            groupRepository.createNotification(
+                    documentRow.uploadedByUserId(),
+                    currentUser.getName() + " left feedback on your shared document \"" + documentRow.title() + "\"."
+            );
+        }
         return getGroup(currentUserEmail, groupId);
     }
 
