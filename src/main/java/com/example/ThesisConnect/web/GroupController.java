@@ -114,6 +114,16 @@ public class GroupController {
     ) {
         return groupService.uploadDocumentVersion(authentication.getName(), groupId, documentId, file);
     }
+    
+    @PostMapping(path = "/{groupId}/documents/{documentId}/versions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ThesisGroupResponse uploadDocumentVersion(
+            Authentication authentication,
+            @PathVariable Long groupId,
+            @PathVariable Long documentId,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return groupService.uploadDocumentVersion(authentication.getName(), groupId, documentId, file);
+    }
 
     @GetMapping("/{groupId}/documents/{documentId}/download")
     public ResponseEntity<Resource> downloadDocument(
