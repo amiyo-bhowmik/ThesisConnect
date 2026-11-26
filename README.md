@@ -1,200 +1,148 @@
 # ThesisConnect
 
-ThesisConnect is a thesis management and collaboration platform built for students who need a simple way to find teammates, form thesis groups, manage shared work, and stay in touch throughout the research process.
+**A web-based thesis management and collaboration platform for university students.** Students can find thesis partners with matching research interests, form and manage thesis groups, share and review thesis documents, and talk to teammates in one place, instead of juggling Facebook groups, Discord and shared drives.
 
-The idea behind the project was to bring the most common parts of thesis work into one place instead of splitting everything across messaging apps, shared drives, and manual coordination. A student can create a profile, discover other students, join or manage a thesis group, share thesis documents, comment on files, and communicate directly with teammates.
+**Course:** CSE470 – Software Engineering, BRAC University (Spring 2026)
+**Team (Section 08, Group 03):** Amiyo Bhowmik, Omar Faruk, Shabnam Sharmin Tarin, Shahinur Yeasmin
 
+![ThesisConnect dashboard](docs/screenshots/02_dashboard.png)
 
+## Why ThesisConnect?
 
-## Project background
+Finding thesis partners is hard. Students often settle for a group working on a topic they don't care about because there's no proper way to find people who share their interests. After the group forms, communication, file sharing and progress tracking are spread across many apps.
 
-The project proposal was structured around background, scope, rationale, objectives, approach, requirements, and conclusion. That same flow can still be seen in the completed application.
+ThesisConnect brings the whole student side of thesis work into one system:
+- **Discover** partners by research interest, skills, department and university, and see who is still looking for a group.
+- **Form** thesis groups through join requests, invitations and admin roles.
+- **Collaborate** on documents with visibility control, versioning and comments.
+- **Communicate** through direct messages, group discussions, pinned messages and notifications.
 
-The background of the project came from a common problem students face during thesis work. Communication, file sharing, member coordination, and progress tracking often happen across too many different places. That makes even simple work harder to organize. ThesisConnect was built to reduce that confusion by putting the main thesis-related activities inside one system.
+The name comes from BRACU's own student portal, *Connect*.
 
-In terms of scope, the project stays focused on the student side of thesis management. It is mainly concerned with how students present themselves, find collaborators, manage group activity, exchange messages, and handle thesis documents in a more organized way.
+## Features
 
-The main objective was to develop a web-based system where students could:
+| # | Requirement | Features |
+|---|---|---|
+| 1 | **User profile management** | Register and log in (JWT). Add department, university, academic details, research interests, skills, bio and profile picture. Mark yourself as *looking for a group*. Update or delete your profile. |
+| 2 | **Student discovery and search** | Search students by name, research interest, department and university. Filter by email and clear filters. View full profiles. Show only students currently looking for a group. |
+| 3 | **Thesis group creation and management** | Create a group with a topic and description. Browse all groups and their members. Send join requests, accept or reject invitations. Admins invite students, approve or reject requests, and can assign other admins. |
+| 4 | **Communication** | Direct messages and group discussions. Notifications for messages, document feedback, invitations and admin changes. Pin and unpin direct and group messages. |
+| 5 | **Document upload and collaboration** | Upload drafts, papers and reports as **public or private (group only)**. View and download them. Comment and give feedback. Upload new versions, with previous versions kept. |
 
-- build academic profiles
-- discover potential thesis partners
-- create and manage thesis groups
-- exchange messages and updates
-- upload, review, and manage thesis documents
+## Screenshots
 
-The project approach was practical rather than overly broad. Instead of trying to build a full institutional management platform, the focus was kept on the parts students would actually use during thesis collaboration: group formation, communication, notifications, and document sharing.
-
-## What the project does
-
-The system supports the full flow from student discovery to ongoing thesis collaboration.
-
-- User registration and login with JWT-based authentication
-- Student profile management, including research interests, skills, academic details, bio, and profile picture
-- Student discovery and filtering to find possible thesis partners
-- Thesis group creation and management
-- Join requests and invitations for group membership
-- Admin assignment and group moderation
-- Thesis document upload and download
-- Document version tracking
-- Comments and feedback on shared thesis documents
-- Notifications for important actions
-- Direct messaging between users
-- Group messaging inside thesis groups
-- Message pinning for both direct and group conversations
-
-## Main features
-
-The implemented requirements eventually grew into a more complete collaboration system, so the final version covers both management and communication needs inside the same platform.
-
-### 1. User accounts and profiles
-
-Each user can create an account, log in securely, and maintain a profile that includes academic and research-related information. The profile section is meant to help students present themselves clearly before joining a group.
-
-### 2. Student discovery
-
-Students can browse and search for other students using profile information such as name, email, department, university, research interest, and whether someone is currently looking for a group.
-
-### 3. Thesis groups
-
-Users can create thesis groups, send join requests, invite other students, approve or reject requests, and manage group membership. Group admins can also assign other admins when needed.
-
-### 4. Document collaboration
-
-Group members can upload thesis-related files such as drafts, reports, and research material. Uploaded documents support:
-
-- visibility control
-- download access
-- version history
-- updated file uploads
-- comments and feedback
-
-### 5. Notifications
-
-The application keeps users informed when something important happens, such as invitations, approvals, rejections, or other group-related actions.
-
-### 6. Messaging
-
-The project also includes communication features so users do not need to leave the platform just to coordinate. There is support for:
-
-- direct one-to-one messaging
-- group chat inside thesis groups
-- pinning important messages
+| | |
+|---|---|
+| ![Login](docs/screenshots/01_login_register.png)<br><sub>Login / register</sub> | ![Dashboard](docs/screenshots/02_dashboard.png)<br><sub>Dashboard</sub> |
+| ![Empty profile](docs/screenshots/03_profile_empty.png)<br><sub>New profile</sub> | ![Edited profile](docs/screenshots/04_profile_edited.png)<br><sub>Profile with interests, skills and picture</sub> |
+| ![Discover](docs/screenshots/05_discover_partners.png)<br><sub>Discover thesis partners</sub> | ![Looking for group](docs/screenshots/06_search_looking_for_group.png)<br><sub>Filter: only students looking for a group</sub> |
+| ![No groups](docs/screenshots/07_groups_none_joined.png)<br><sub>My thesis groups (none yet)</sub> | ![Create group](docs/screenshots/08_create_group.png)<br><sub>Create a thesis group</sub> |
+| ![Joined groups](docs/screenshots/09_groups_joined.png)<br><sub>My thesis groups after joining</sub> | ![Direct messages](docs/screenshots/11_direct_messages.png)<br><sub>Direct messages</sub> |
+| ![Notifications](docs/screenshots/12_notifications.png)<br><sub>Notifications</sub> | <img src="docs/screenshots/10_group_page.png" alt="Group page" width="300"><br><sub>Group page: discussion, documents, members, invitations</sub> |
 
 ## Tech stack
 
-- Java 21
-- Spring Boot 4
-- Spring Security
-- JWT authentication
-- Spring JDBC
-- MySQL
-- HTML, CSS, and JSX-based frontend pages served from Spring Boot static resources
-- Maven
+| Layer | Technology |
+|---|---|
+| Backend | Java 21, Spring Boot 4 (Web MVC, JDBC, Validation) |
+| Security | Spring Security, JWT (OAuth2 resource server), BCrypt password hashing |
+| Database | MySQL (H2 for tests) |
+| Frontend | React 18 (JSX compiled in the browser with Babel), HTML and CSS, served as Spring Boot static resources |
+| Build | Maven (wrapper included) |
+| Workflow | Git and GitHub: feature branches and pull requests (`feature/…`, `bugfix/…`, `docs/…`) |
 
-## Project structure
+## Architecture
 
-The project is mainly organized into the following parts:
+The backend follows a layered MVC design:
 
-- `src/main/java/com/example/ThesisConnect/config`
-  Security, JWT, and web configuration
-- `src/main/java/com/example/ThesisConnect/domain`
-  Core domain models such as users, thesis groups, documents, comments, and messages
-- `src/main/java/com/example/ThesisConnect/dto`
-  Request and response objects used by the API
-- `src/main/java/com/example/ThesisConnect/repository`
-  JDBC-based data access layer
-- `src/main/java/com/example/ThesisConnect/service`
-  Business logic for authentication, profiles, groups, documents, and messaging
-- `src/main/java/com/example/ThesisConnect/web`
-  Controllers for API endpoints and page routing
-- `src/main/resources/static`
-  Frontend pages and assets
-- `src/main/resources/schema.sql`
-  Database schema used by the application
-- `uploads/`
-  Uploaded profile pictures and thesis documents
+```
+web/          REST controllers (auth, profile, groups, documents, messages) and page routes
+service/      Business logic: auth, JWT, profiles, groups, documents, communication
+repository/   Data access with Spring JDBC and hand-written SQL
+domain/       Core models: User, ThesisGroup, JoinRequest, Document, DocumentVersion,
+              Comment, Message, GroupMessage, Notification
+dto/          Request and response objects for the API
+config/       Spring Security, JWT and web (upload folder) configuration
+```
 
-## Database
+### Class diagram
 
-The application is configured to use MySQL for local development.
+![Class diagram](docs/diagrams/class_diagram.png)
 
-Current MySQL configuration:
+The class diagram is also in [PDF](docs/diagrams/Class_Diagram.pdf), with a [list of every class's attributes and operations](docs/diagrams/Classes_Attributes_Operations.pdf).
 
-- database name: `thesisconnect`
-- default URL: `jdbc:mysql://localhost:3306/thesisconnect`
-- username: `root`
+### Database
 
-The schema is created from `src/main/resources/schema.sql`.
+MySQL with 14 tables, created automatically from `src/main/resources/schema.sql` on startup:
+`users`, `user_research_interests`, `user_skills`, `thesis_groups`, `group_members`, `join_requests`, `notifications`, `documents`, `document_versions`, `comments`, `direct_messages`, `group_messages`, `direct_message_pins`, `group_message_pins`.
 
-Main tables include:
+### REST API overview
 
-- `users`
-- `user_research_interests`
-- `user_skills`
-- `thesis_groups`
-- `group_members`
-- `join_requests`
-- `notifications`
-- `documents`
-- `document_versions`
-- `comments`
-- `direct_messages`
-- `group_messages`
-- `direct_message_pins`
-- `group_message_pins`
+| Area | Endpoints |
+|---|---|
+| Auth | `POST /api/auth/register`, `POST /api/auth/login` |
+| Profile | `GET/PUT/DELETE /api/profile/me`, `POST /api/profile/me/picture`, `GET /api/profile/students` (search), `GET /api/profile/students/{id}` |
+| Groups | `GET/POST /api/groups`, `GET /api/groups/{id}`, join requests, invitations, approve or reject, assign or remove admin |
+| Documents | Upload, upload a new version, comment, download: `/api/groups/{id}/documents/…` |
+| Messages | Direct and group messages with pin and unpin: `/api/messages/direct/…`, `/api/messages/groups/…` |
+| Notifications | `GET /api/groups/notifications`, `GET …/unread`, `POST …/read` |
 
-## Running the project
+## Running locally
 
 ### Prerequisites
+- **Java 21** or newer
+- **MySQL 8+** running locally
+- Maven is optional, because the wrapper (`mvnw`) downloads it
 
-Before running the project, make sure you have:
+### 1. Create the database
+```sql
+CREATE DATABASE thesisconnect;
+```
+The tables are created automatically when the app starts.
 
-- Java 21 installed
-- Maven installed, or use the included Maven wrapper
-- MySQL running locally
-- a MySQL database named `thesisconnect`
+### 2. Check the connection settings
+`src/main/resources/application-mysql.properties` points to `localhost:3308` with user `root` and an empty password. The default MySQL port on most machines is **3306**. You can either change the file, or pass your own settings when running, as below.
 
-### Configuration
-
-Check the following file if you need to change the database connection:
-
-- `src/main/resources/application-mysql.properties`
-
-If needed, update:
-
-- MySQL username
-- MySQL password
-- MySQL port
-
-### Run with Maven wrapper
-
-On Windows:
-
+### 3. Run
+macOS / Linux:
+```bash
+./mvnw spring-boot:run
+```
+Windows:
 ```bash
 mvnw.cmd spring-boot:run
 ```
 
-Or with Maven:
-
+With a different port or password:
 ```bash
-mvn spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.datasource.url=jdbc:mysql://localhost:3306/thesisconnect --spring.datasource.password=YOUR_PASSWORD"
 ```
 
-After the application starts, open it in your browser through the local Spring Boot server.
+### 4. Open
+Go to **http://localhost:8080**, register an account, and start exploring. Use a second browser profile or a private window to test groups and messaging with another user.
 
+**Notes**
+- Uploaded profile pictures go to `uploads/profile-pictures`, and documents to `uploads/thesis-documents`. The size limit is 5 MB, set in `application.properties`.
+- The JWT secret in `application.properties` is a development value. Change it before any real deployment.
 
+## Team and contributions
 
-## Notes
+| Member | Main contributions |
+|---|---|
+| **Amiyo Bhowmik** | Project setup and configuration. Registration, login, Spring Security and JWT. User schema and repository. Document upload and download, versioning and comments (API and UI). Database fixes. |
+| **Omar Faruk** | Profile management: view and update API, profile picture upload, interests, skills and bio, profile deletion. Thesis group creation: schema, domain, DTOs, repository, service, controller and UI. Group details and member profile views. Pinned-message and notification updates. Code review and merging of pull requests. |
+| **Shabnam Sharmin Tarin** | Student search and discovery (backend filters and UI). Join requests and invitation responses. Admin invite, approve and reject flows, and admin assignment. Tests for the group admin workflow. |
+| **Shahinur Yeasmin** | Direct messaging and group discussions (schema, endpoints, UI). Page routing and the logged-in home page. Selected-student profile panel. Per-user pin tables. Notifications for document feedback. |
 
-- Uploaded profile pictures are stored in `uploads/profile-pictures`
-- Uploaded thesis documents are stored in `uploads/thesis-documents`
-- File upload limits are configured in `application.properties`
-- JWT settings are also configured in `application.properties`
+## Project documents
 
-## Why this project matters
+- [Project report / proposal](docs/Project_Report.pdf): background, scope, objectives, approach, requirements
+- [Final feature list](docs/Updated_Features.pdf)
+- [Class diagram](docs/diagrams/Class_Diagram.pdf) and [classes, attributes and operations](docs/diagrams/Classes_Attributes_Operations.pdf)
 
-Most thesis work is collaborative, but the tools students use are often scattered. ThesisConnect was built to make that process more organized. Instead of only focusing on one part, like messaging or file upload, the project tries to support the full student workflow from finding collaborators to managing actual thesis materials.
+## Future work
 
-## Final remark
-
-In the end, this project grew from a proposal idea into a complete working thesis management website. It reflects both the technical side of building a full-stack application and the practical side of solving a real student coordination problem in a way that is actually useful for day-to-day thesis work.
+- Real-time messaging with WebSockets, instead of refreshing.
+- Supervisor / faculty accounts to review and approve thesis groups.
+- Partner recommendations based on matching interests and skills.
+- Deployment, with a production build of the frontend.
