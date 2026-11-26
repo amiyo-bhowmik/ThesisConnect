@@ -7,6 +7,12 @@
 
 ![ThesisConnect dashboard](docs/screenshots/02_dashboard.png)
 
+## Demo
+
+[![Watch the ThesisConnect demo on YouTube](https://img.youtube.com/vi/i_usah0xy2k/hqdefault.jpg)](https://www.youtube.com/watch?v=i_usah0xy2k)
+
+▶️ **[Watch the full demo on YouTube](https://www.youtube.com/watch?v=i_usah0xy2k)**: a walkthrough of the app.
+
 ## Why ThesisConnect?
 
 Finding thesis partners is hard. Students often settle for a group working on a topic they don't care about because there's no proper way to find people who share their interests. After the group forms, communication, file sharing and progress tracking are spread across many apps.
@@ -136,6 +142,7 @@ Go to **http://localhost:8080**, register an account, and start exploring. Use a
 
 ## Project documents
 
+- [Demo video](https://www.youtube.com/watch?v=i_usah0xy2k)
 - [Project report / proposal](docs/Project_Report.pdf): background, scope, objectives, approach, requirements
 - [Final feature list](docs/Updated_Features.pdf)
 - [Class diagram](docs/diagrams/Class_Diagram.pdf) and [classes, attributes and operations](docs/diagrams/Classes_Attributes_Operations.pdf)
